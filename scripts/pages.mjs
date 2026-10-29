@@ -118,12 +118,25 @@ ${noscript(lang)}
 }
 
 function events(lang) {
-  return `${head(lang, 'ev')}
+  const es = lang === 'es';
+  return `<header class="page-head ev-head"><div><h1>${esc(t(lang, 'ev.title'))}</h1><p class="lead">${esc(t(lang, 'ev.lead'))}</p></div>
+  <div class="clock" aria-live="off"><p class="small muted">${esc(t(lang, 'ev.localTime'))}</p><p class="clock-time" id="evClock">--:--</p><p class="small muted" id="evUtc"></p></div></header>
 ${noscript(lang)}
-<div class="filters card" id="evFilters"><div class="field"><label for="evc">${esc(t(lang, 'ev.category'))}</label><select id="evc"><option value="">${esc(t(lang, 'all'))}</option></select></div><p class="muted small" id="evclock" aria-live="off"></p></div>
+<form class="filters card" id="evFilters" role="search" action="" method="get">
+  <div class="field grow"><label for="evq">${esc(t(lang, 'ev.search'))}</label><input id="evq" type="search" placeholder="${esc(t(lang, 'ev.searchPh'))}" autocomplete="off" spellcheck="false"></div>
+  <div class="field"><label for="evc">${esc(t(lang, 'ev.category'))}</label><select id="evc"><option value="">${esc(t(lang, 'all'))}</option></select></div>
+  <div class="field"><label for="evr">${esc(t(lang, 'ev.range'))}</label><select id="evr"><option value="2">2 h</option><option value="4">4 h</option><option value="8">8 h</option></select></div>
+  <div class="field check"><input id="evtop" type="checkbox"><label for="evtop">${esc(t(lang, 'ev.topTimes'))}</label></div>
+</form>
+<section aria-labelledby="evtl-h">
+  <h2 id="evtl-h">${esc(t(lang, 'ev.timeline'))}</h2>
+  <p class="small muted">${esc(t(lang, 'ev.timelineHelp'))}</p>
+  <div class="evt-scroll card" tabindex="0" role="region" aria-labelledby="evtl-h"><div id="evTimeline" class="evt-wrapper"></div></div>
+  <p class="small muted" id="evHidden"></p>
+</section>
 <section aria-labelledby="evnow-h"><h2 id="evnow-h">${esc(t(lang, 'ev.now'))}</h2><ul class="ev-list" id="evnow"></ul></section>
 <section aria-labelledby="evsoon-h"><h2 id="evsoon-h">${esc(t(lang, 'ev.soon'))}</h2><ul class="ev-list" id="evsoon"></ul></section>
-<p class="muted small">${esc(t(lang, 'ev.source'))} <a href="${pagePath(lang, 'legal')}#licencias">${esc(t(lang, 'nav.legal'))}</a></p>`;
+<p class="muted small">${esc(t(lang, 'ev.source'))} ${es ? 'Los eventos que dependen de los jugadores pueden adelantarse o atrasarse unos minutos.' : 'Player-driven events can start a few minutes early or late.'} <a href="${pagePath(lang, 'legal')}#licencias">${esc(t(lang, 'nav.legal'))}</a></p>`;
 }
 
 function map(lang) {

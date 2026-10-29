@@ -215,15 +215,23 @@ const geo = compactFloor();
 fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
 
 // ---------- 7. Events ----------
+// Each segment: name es/en, waypoint, wiki page, color (as in the wiki timer) and map position (exact point or its waypoint).
+const mapEs = new Map(geo.maps.map((m) => [m.n[1], m.n[0]]));
+const wpByChat = new Map(geo.wps.map((w) => [w.chat, w]));
+const esName = (en) => eventNamesEs.names[en] || mapEs.get(en) || en;
 const events = Object.entries(timers.events).map(([key, ev]) => ({
   key,
   c: [eventNamesEs.categories[ev.c] || ev.c, ev.c],
-  n: [eventNamesEs.names[ev.n] || ev.n, ev.n],
-  s: Object.fromEntries(Object.entries(ev.s).map(([k, s]) => [k, { n: [eventNamesEs.names[s[0]] || s[0], s[0]], wp: s[2] || '' }])),
+  n: [esName(ev.n), ev.n],
+  s: Object.fromEntries(Object.entries(ev.s).map(([k, sg]) => {
+    const wp = sg[2] ? wpByChat.get(sg[2]) : null;
+    const pos = Array.isArray(sg[4]) ? sg[4].map(Math.round) : wp ? wp.c : null;
+    return [k, { n: [esName(sg[0]), sg[0]], wp: sg[2] || '', wiki: sg[1] || '', col: sg[3] || null, pos, wpn: wp ? wp.n : null }];
+  })),
   p: ev.p,
   q: ev.q,
 }));
-fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, events }));
+fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, v: timers.v, events }));
 
 // ---------- 8. Metadata ----------
 const counts = { items: items.size, recipes: recipes.length, tradable: priceLines.length, waypoints: geo.wps.length };

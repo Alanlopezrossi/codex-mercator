@@ -53,13 +53,39 @@ async function init() {
     ...geo.maps.filter((m) => m.rect).map((m) => ({ label: m.n[li] || m.n[1], kind: 'map', m })),
     ...geo.wps.map((w) => ({ label: `${w.n[li] || w.n[1]} — ${mapsById.get(w.m)?.n[li] || ''}`, kind: 'wp', w })),
   ];
+  // Events (world bosses, metas) with a position: they can be searched from here too.
+  try {
+    const evs = (await fetch(`${document.body.dataset.data}/events.json`).then((r) => r.json())).events;
+    const seen = new Set();
+    for (const ev of evs) for (const sg of Object.values(ev.s)) {
+      if (!sg.pos) continue;
+      const label = `${lang === 'es' ? 'Evento' : 'Event'}: ${sg.n[li] || sg.n[1]} — ${ev.n[li]}`;
+      if (seen.has(label)) continue;
+      seen.add(label);
+      options.push({ label, kind: 'ev', pos: sg.pos, name: `${sg.n[li] || sg.n[1]} — ${ev.n[li]}`, chat: sg.wp });
+    }
+  } catch { /* events are optional on the map */ }
   const byLabel = new Map(options.map((o) => [o.label, o]));
   dl.innerHTML = [...byLabel.keys()].slice(0, 4000).map((l) => `<option value="${esc(l)}"></option>`).join('');
   q.addEventListener('change', () => {
     const o = byLabel.get(q.value);
     if (!o) return;
     if (o.kind === 'map') map.fitBounds(L.latLngBounds(un(o.m.rect[0][0], o.m.rect[1][1]), un(o.m.rect[1][0], o.m.rect[0][1])));
+    else if (o.kind === 'ev') showPoint(o.pos, o.name, o.chat);
     else map.setView(un(o.w.c[0], o.w.c[1]), 6);
   });
+
+  // Links from Events: /mapa#@x,y,label,waypoint
+  function showPoint(pos, name, chat) {
+    const ll = un(pos[0], pos[1]);
+    map.setView(ll, 6);
+    L.popup().setLatLng(ll).setContent(`<strong>${esc(name)}</strong>${chat ? `<br><code>${esc(chat)}</code>` : ''}`).openOn(map);
+  }
+  const m = location.hash.match(/^#@(-?\d+),(-?\d+)(?:,([^,]*))?(?:,([^,]*))?/);
+  if (m) {
+    const dec = (v) => { try { return decodeURIComponent(v || ''); } catch { return ''; } };
+    showPoint([Number(m[1]), Number(m[2])], dec(m[3]), dec(m[4]));
+    el.scrollIntoView({ block: 'start' });
+  }
 }
 if (el) init();
