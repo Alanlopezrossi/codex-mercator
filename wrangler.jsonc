@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codex-mercator",
+  "main": "src/worker/index.js",
+  "compatibility_date": "2025-09-15",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  // Every 6 hours the Worker calls the Workers Builds deploy hook: new build with fresh API data.
+  // The URL goes in the DEPLOY_HOOK_URL secret (npx wrangler secret put DEPLOY_HOOK_URL).
+  "triggers": {
+    "crons": ["17 */6 * * *"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

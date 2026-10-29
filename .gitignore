@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.cache/
+.wrangler/
+src/generated/
+.dev.vars
+*.log
+tests/e2e/screenshots/

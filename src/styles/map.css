@@ -1,0 +1,9 @@
+/* Map page: Leaflet (BSD-2-Clause) + theme adjustments. */
+@import 'leaflet/dist/leaflet.css';
+
+.leaflet-container { font: inherit; background: #0b0d11; }
+.leaflet-tooltip { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--shadow); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--text); }
+.leaflet-control-zoom a { background: var(--surface); color: var(--text); border-color: var(--border) !important; }
+.leaflet-control-attribution { background: rgb(0 0 0 / 0.55) !important; color: #ddd !important; }
+.leaflet-control-attribution a { color: #fff !important; text-decoration: underline !important; }

@@ -1,0 +1,30 @@
+{
+  "name": "codex-mercator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Codex Mercator: unofficial Guild Wars 2 fansite with the full item database and live trading post prices, in Spanish and English. Runs on Cloudflare Workers.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "data:fetch": "node scripts/fetch-api.mjs",
+    "data:snapshot": "node scripts/from-snapshot.mjs",
+    "generate": "node scripts/build.mjs",
+    "build": "npm run data:fetch && npm run generate",
+    "build:snapshot": "npm run data:snapshot && npm run generate",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "node tests/e2e/smoke.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.3",
+    "@fontsource/cinzel": "5.2.6",
+    "esbuild": "0.25.10",
+    "leaflet": "1.9.4",
+    "playwright": "1.63.0",
+    "wrangler": "4.40.0"
+  }
+}
