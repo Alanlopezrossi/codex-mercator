@@ -12,7 +12,7 @@ import { securityHeaders } from '../src/shared/security.js';
 const ROOT = path.resolve('.');
 const RAW = path.join(ROOT, '.cache/raw');
 const DIST = path.join(ROOT, 'dist');
-const SITE_URL = (process.env.SITE_URL || 'https://codexmercator.com').replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://codex-mercator.mindcuriosolab.workers.dev').replace(/\/$/, '');
 const readRaw = (f) => JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'));
 const readData = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
 const t0 = Date.now();
@@ -289,6 +289,8 @@ for (let i = 0; i * chunk < urls.length; i++) {
   sitemapFiles.push(name);
 }
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemapFiles.map((f) => `<sitemap><loc>${SITE_URL}/${f}</loc><lastmod>${today}</lastmod></sitemap>`).join('')}</sitemapindex>`);
+fs.mkdirSync(path.join(DIST, '.well-known'), { recursive: true });
+fs.writeFileSync(path.join(DIST, '.well-known/security.txt'), `Contact: mailto:${CONTACT}\nExpires: ${new Date(Date.now() + 365 * 864e5).toISOString()}\nPreferred-Languages: es, en\nCanonical: ${SITE_URL}/.well-known/security.txt\n`);
 fs.writeFileSync(path.join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /data/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 
 // Security and cache headers for static assets (the Worker adds its own to dynamic responses).
