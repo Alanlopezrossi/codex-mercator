@@ -63,6 +63,8 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
         if (SUFFIX[tk]) return SUFFIX[tk];
         const v = tk.match(/^([A-Z])?([A-Z][a-z]+) (variant|version)$/);
         if (v) return [`variante ${v[2].toLowerCase()}`, tk.replace(/^[A-Z](?=[A-Z])/, '')];
+        const y = tk.match(/^(\d+) (variant|version)$/);
+        if (y) return [`variante de ${y[1]}`, tk];
         return [tk, tk];
       });
       return [tokens.map((x) => x[0]).join(', '), tokens.map((x) => x[1]).join(', ')];

@@ -39,10 +39,16 @@ async function init() {
   }).addTo(map);
   map.setMaxBounds(content.pad(0.15));
   // Fill the whole frame from the start: zoom so the continent covers the map box (no black borders).
+  // Start on the core of Tyria (10th–90th percentile of map centers, so far-away regions like Cantha do not
+  // leave the view on open ocean), zoomed so the tiles fill the whole frame.
+  const pct = (arr, p) => arr.slice().sort((a, b) => a - b)[Math.floor((arr.length - 1) * p)];
+  const cx = rects.map((r) => (r[0][0] + r[1][0]) / 2);
+  const cy = rects.map((r) => (r[0][1] + r[1][1]) / 2);
+  const core = L.latLngBounds(un(pct(cx, 0.1), pct(cy, 0.6)), un(pct(cx, 0.9), pct(cy, 0.1)));
   const fit = () => {
-    const zFill = map.getBoundsZoom(content, true);
     map.setMinZoom(Math.max(1, map.getBoundsZoom(content, false)));
-    map.setView(content.getCenter(), zFill, { animate: false });
+    map.fitBounds(core, { animate: false });
+    map.setZoom(Math.max(map.getZoom(), map.getBoundsZoom(content, true)), { animate: false });
   };
   fit();
 
