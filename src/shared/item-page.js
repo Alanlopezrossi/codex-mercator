@@ -2,6 +2,7 @@
 import { esc, coin, coinText, iconUrl, num } from './format.js';
 import { LANGS, pagePath, t, tr, itemPath, SHOWN_FLAGS } from './i18n.js';
 import { ICONS } from './layout.js';
+import { GUIDES } from '../generated/guides.js';
 
 const L = (lang) => LANGS.indexOf(lang);
 
@@ -86,16 +87,75 @@ function wikiCredit(lang, it) {
   return `<p class="credit small muted">${esc(t(lang, 'item.wikiNote'))} <a href="${esc(url)}" rel="noopener">${esc(t(lang, 'item.wikiSource'))}</a> · <a href="https://www.gnu.org/licenses/old-licenses/fdl-1.2.html" rel="noopener license">GFDL 1.2</a></p>`;
 }
 
+const KIND = { Chance: ['probabilidad', 'chance'], Guaranteed: ['garantizado', 'guaranteed'], Choice: ['a elección', 'choice'] };
+
+// What a bag, box or chest gives.
+function contentsHtml(lang, it) {
+  if (!it.ct?.length && !it.ctc?.length) return '';
+  const li = L(lang);
+  const groups = { Guaranteed: [], Choice: [], Chance: [] };
+  for (const row of it.ct || []) (groups[row[2]] || groups.Chance).push(row);
+  const head = { Guaranteed: lang === 'es' ? 'Siempre trae' : 'Always contains', Choice: lang === 'es' ? 'A elección' : 'Choose one', Chance: lang === 'es' ? 'Puede traer' : 'May contain' };
+  let html = '';
+  for (const k of ['Guaranteed', 'Choice', 'Chance']) {
+    if (!groups[k].length) continue;
+    html += `<h3 class="h-sub">${esc(head[k])} <span class="count">${groups[k].length}</span></h3><ul class="ref-grid">${groups[k].map(([id, qty]) => `<li>${refLink(lang, id, it.refs?.[id], qty > 1 ? qty : 0)}</li>`).join('')}</ul>`;
+  }
+  if (it.ctc?.length) html += `<h3 class="h-sub">${lang === 'es' ? 'Divisas' : 'Currencies'}</h3><ul class="plain-list">${it.ctc.map(([, qty, name]) => `<li>${num(qty, lang)} ${esc(name)}</li>`).join('')}</ul>`;
+  return `<section class="card" aria-labelledby="ct-h"><h2 id="ct-h">${lang === 'es' ? 'Contenido' : 'Contents'}</h2>${html}</section>`;
+}
+
+// Hand-written guides (in Spanish): {{id}} / {{n×id}} are item links and [[place]] are places on the map.
+function guideText(lang, it, text) {
+  const places = GUIDES.places || {};
+  return esc(text)
+    .replace(/\{\{(?:(\d+)×)?(\d+)\}\}/g, (_, n, id) => {
+      const ref = it.refs?.[id] || (Number(id) === it.id ? [it.n[0], it.n[1], it.r, it.ic] : null);
+      const name = ref ? ref[L(lang)] || ref[0] : `#${id}`;
+      return `<a class="g-item r-txt-${esc(ref?.[2] || 'Basic')}" href="${itemPath(lang, id, name)}">${n ? `${n}× ` : ''}${esc(name)}</a>`;
+    })
+    .replace(/\[\[([a-z0-9_-]+)\]\]/gi, (_, key) => {
+      const p = places[key];
+      if (!p) return esc(key);
+      const link = p.coord ? `${pagePath(lang, 'map')}#@${p.coord[0]},${p.coord[1]},${encodeURIComponent(p.name)}` : '';
+      return link ? `<a class="g-place" href="${link}">${esc(p.name)}</a>` : `<strong>${esc(p.name)}</strong>`;
+    });
+}
+function guidesHtml(lang, it) {
+  if (!it.gd?.length) return '';
+  return it.gd.map((key) => {
+    const g = GUIDES.guides?.[key];
+    if (!g) return '';
+    const needs = (g.needs || []).map(([id, n]) => `<li>${refLink(lang, id, it.refs?.[id], n)}</li>`).join('');
+    const sections = (g.sections || []).map((sec) => `<h3 class="h-sub">${esc(sec.title)}</h3><ol class="guide-steps">${(sec.steps || []).map((st) => `<li>${guideText(lang, it, st)}</li>`).join('')}</ol>`).join('');
+    return `<section class="card guide" aria-labelledby="g-${esc(key)}" lang="es"><h2 id="g-${esc(key)}">${lang === 'es' ? 'Guía' : 'Guide'}: ${esc(g.title)}</h2>
+      ${lang === 'es' ? '' : '<p class="small muted" lang="en">This guide is only available in Spanish for now.</p>'}
+      <p>${guideText(lang, it, g.intro || '')}</p>
+      ${g.requires?.length ? `<h3 class="h-sub">Requisitos</h3><ul class="plain-list">${g.requires.map((r) => `<li>${guideText(lang, it, r)}</li>`).join('')}</ul>` : ''}
+      ${needs ? `<details class="more"><summary>Materiales en total (${(g.needs || []).length})</summary><ul class="ref-grid">${needs}</ul></details>` : ''}
+      ${sections}
+    </section>`;
+  }).join('');
+}
+
 function acquisitionHtml(lang, it) {
   const w = it.w;
   // The wiki sometimes lists the item inside its own containers: those entries are dropped.
   const cont = (w?.cont || []).filter((e) => e.id !== it.id);
+  // Containers from the container data that the wiki list does not already have.
+  const seen = new Set(cont.map((e) => e.id).filter(Boolean));
+  for (const [id, qty, kind] of it.ci || []) {
+    if (id === it.id || seen.has(id) || !it.refs?.[id]) continue;
+    seen.add(id);
+    const k = KIND[kind] || KIND.Chance;
+    cont.push({ id, n: [it.refs[id][0], it.refs[id][1]], s: [`(${qty > 1 ? `${qty} · ` : ''}${k[0]})`, `(${qty > 1 ? `${qty} · ` : ''}${k[1]})`], ok: true });
+  }
   const gath = (w?.gath || []).filter((e) => e.id !== it.id);
-  if (!w || (!w.sold?.length && !cont.length && !gath.length)) return '';
+  if (!w?.sold?.length && !cont.length && !gath.length) return '';
   const li = L(lang);
   const isEs = lang === 'es';
   let html = '';
-  if (w.sold?.length) {
+  if (w?.sold?.length) {
     const head = isEs ? ['Vendedor', 'Zona', 'Costo', 'Notas'] : ['Vendor', 'Area', 'Cost', 'Notes'];
     const rows = w.sold.map((r) => {
       // Rows whose cost or note could not be translated keep the English text, marked as such.
@@ -158,7 +218,6 @@ export function renderItemBody(lang, it) {
   const links = [
     [`https://wiki.guildwars2.com/wiki/Special:Search/${encodeURIComponent(it.n[1] || name)}`, 'Guild Wars 2 Wiki'],
     [`https://www.gw2bltc.com/${lang === 'es' ? 'es' : 'en'}/item/${it.id}`, 'GW2BLTC'],
-    [`https://${lang === 'es' ? 'es' : 'en'}.gw2treasures.com/item/${it.id}`, 'gw2treasures'],
   ];
   return `
 <nav class="crumbs" aria-label="${lang === 'es' ? 'Ruta' : 'Breadcrumb'}"><ol>
@@ -173,7 +232,7 @@ export function renderItemBody(lang, it) {
     <div class="item-title">
       <h1 class="r-txt-${esc(it.r)}">${esc(name)}</h1>
       ${otherName ? `<p class="alt-name muted" lang="${LANGS[1 - li]}">${esc(otherName)}</p>` : ''}
-      <p class="item-meta"><span class="tag r-tag-${esc(it.r)}">${esc(tr.rarity(lang, it.r))}</span> <span>${esc(tr.type(lang, it.t))}${sub ? ` · ${esc(sub)}` : ''}</span>${it.l ? ` <span>· ${esc(t(lang, 'level'))} ${it.l}</span>` : ''} <span class="muted small">· ID ${it.id}</span></p>
+      <p class="item-meta"><span class="tag r-tag-${esc(it.r)}">${esc(tr.rarity(lang, it.r))}</span> <span>${esc(tr.type(lang, it.t))}${sub ? ` · ${esc(sub)}` : ''}</span>${it.l ? ` <span>· ${esc(t(lang, 'level'))} ${it.l}</span>` : ''} <span class="muted small">· ID ${it.id}</span>${it.gone ? ` <span class="tag">${lang === 'es' ? 'Ya no está en el juego' : 'No longer in the game'}</span>` : ''}</p>
     </div>
     <div class="item-actions">
       ${it.c ? `<button type="button" class="btn btn-small copy-btn" data-copy="${esc(it.c)}" aria-label="${esc(t(lang, 'copy'))} ${esc(t(lang, 'item.chat'))} ${esc(it.c)}"><code>${esc(it.c)}</code></button>` : ''}
@@ -187,8 +246,10 @@ export function renderItemBody(lang, it) {
       ${detailsList(lang, it)}
     </section>
   </div>
+  ${guidesHtml(lang, it)}
   ${recipesHtml(lang, it)}
   ${forgeHtml(lang, it)}
+  ${contentsHtml(lang, it)}
   ${acquisitionHtml(lang, it)}
   ${achHtml(lang, it)}
   ${usedInHtml(lang, it)}

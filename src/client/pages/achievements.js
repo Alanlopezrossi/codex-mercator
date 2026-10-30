@@ -57,6 +57,23 @@ function renderTree(q = '') {
   }).join('') || `<p class="muted">${esc(t('noResults'))}</p>`;
 }
 
+let extraCache = null;
+async function loadExtra() {
+  if (extraCache) return extraCache;
+  try { extraCache = (await fetch(`${document.body.dataset.data}/ach-extra.json`).then((r) => r.json())).achievements || {}; } catch { extraCache = {}; }
+  return extraCache;
+}
+const guideShards = new Map();
+async function loadGuides(ids) {
+  const out = {};
+  const shards = [...new Set(ids.map((id) => Math.floor(id / 250)))];
+  await Promise.all(shards.map(async (b) => {
+    if (!guideShards.has(b)) guideShards.set(b, fetch(`${document.body.dataset.data}/achg/${b}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+    Object.assign(out, await guideShards.get(b));
+  }));
+  return out;
+}
+
 async function open(catId) {
   const c = categories.get(catId);
   if (!c) return;
@@ -77,6 +94,11 @@ async function open(catId) {
   }
   const order = new Map(c.achievements.map((id, i) => [id, i]));
   achs.sort((a, b) => order.get(a.id) - order.get(b.id));
+  // Achievements that are no longer in the API but belonged to this category (kept from the previous project).
+  const extra = await loadExtra();
+  for (const e of Object.values(extra)) if (e.cat === catId && !achs.some((a) => a.id === e.data.id)) achs.push({ ...e.data, _gone: true });
+  // Wiki guide text for these achievements (English, GFDL).
+  const guides = await loadGuides(achs.map((a) => a.id));
   const itemIds = new Set();
   for (const a of achs) {
     for (const r of a.rewards || []) if (r.type === 'Item') itemIds.add(r.id);
@@ -102,12 +124,13 @@ async function open(catId) {
       }).join('');
       const bits = (a.bits || []).filter((b) => b.type === 'Item' || b.text).slice(0, 60).map((b) => (b.type === 'Item' ? `<li>${itemLink(b.id, 1)}</li>` : `<li>${esc(b.text)}</li>`)).join('');
       return `<article class="card ach" id="a${a.id}">
-        <header><h3>${esc(a.name)}</h3>${pts ? `<span class="pts">${pts} ${esc(t('ach.points'))}</span>` : ''}</header>
+        <header><h3>${esc(a.name)}${a._gone ? ` <span class="tag">${lang === 'es' ? 'Ya no está en la API' : 'No longer in the API'}</span>` : ''}</h3>${pts ? `<span class="pts">${pts} ${esc(t('ach.points'))}</span>` : ''}</header>
         ${a.description ? `<p class="muted">${text(a.description)}</p>` : ''}
         ${a.requirement ? `<p>${text(a.requirement.replace(/ {2}/g, ` ${num(a.tiers?.at(-1)?.count || '', lang)} `))}</p>` : ''}
         ${tiers}
         ${bits ? `<details><summary>${esc(t('ach.objectives'))} (${a.bits.length})</summary><ul class="ref-grid">${bits}</ul></details>` : ''}
         ${rewards ? `<p class="small"><strong>${esc(t('ach.rewards'))}:</strong></p><ul class="ref-list">${rewards}</ul>` : ''}
+        ${guides[a.id] ? `<details class="ach-guide"><summary>${lang === 'es' ? 'Guía de la wiki (en inglés)' : 'Wiki guide'}</summary><p lang="en">${esc(guides[a.id])}</p><p class="small muted">Guild Wars 2 Wiki · GFDL 1.2</p></details>` : ''}
       </article>`;
     }).join('');
   list.querySelector('h2')?.setAttribute('tabindex', '-1');

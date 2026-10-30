@@ -76,7 +76,8 @@ Step by step in **[docs/DEPLOY.md](docs/DEPLOY.md)** (Cloudflare connected to Gi
 - ArenaNet/NCSOFT copyright and trademark notice on every page, as their Content Terms of Use require.
 - Nothing behind a paywall or a sign-up. If ads are added, they must be non-intrusive.
 - Content from the Guild Wars 2 Wiki (Mystic Forge, vendors, timers) under **GNU FDL 1.2**, with attribution and a link to the original page. See `data/README.md`.
-- Icons and tiles are loaded from ArenaNet's servers without modification. No wiki images or third-party scraping are used (gw2treasures, GW2BLTC and the wiki are links only).
+- Icons and tiles are loaded from ArenaNet's servers without modification. No wiki images are used.
+- Container contents, removed items, extra achievements and the hand-written guides come from the previous Bazar GW2 project (`data/containers.json`, `data/items-extra.json`, `data/achievements-extra.json`, `data/guides.json`).
 - Code under the MIT license (it does not cover game content).
 
 ## Roadmap

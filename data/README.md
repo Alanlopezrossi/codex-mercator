@@ -13,3 +13,9 @@ El contenido del juego (nombres, descripciones) es © ArenaNet, LLC y se usa seg
 
 Para actualizar `wiki-data.json` cuando la wiki vuelva, reemplazá el archivo manteniendo el mismo formato
 (`items[id] = { title, forge?, sold?, cont?, gath? }`).
+
+| `containers.json` | Contenido de 348 bolsas, cofres y cajas | Proyecto anterior Bazar GW2. |
+| `guides.json` | 32 guías escritas a mano (Mawdrey, legendarias, etc.) | Proyecto anterior Bazar GW2 (propias). |
+| `ach-guides.json` | Guía de 7.035 logros | Guild Wars 2 Wiki (copia archivada), **GNU FDL 1.2**. |
+| `items-extra.json` | 1.352 ítems que ya no están en la API oficial | Proyecto anterior Bazar GW2. |
+| `achievements-extra.json` | 115 logros que ya no están en la API oficial | Proyecto anterior Bazar GW2. |
