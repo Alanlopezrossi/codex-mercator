@@ -1,5 +1,5 @@
 // Achievements: groups and categories from the official API; achievements load when a category is opened.
-import { $, lang, t, debounce } from '../lib/env.js';
+import { $, lang, t, debounce, store } from '../lib/env.js';
 import { get, batched, items as apiItems } from '../lib/gw2.js';
 import { esc, coin, iconUrl, num } from '../../shared/format.js';
 import { itemPath } from '../../shared/i18n.js';
@@ -25,8 +25,12 @@ async function init() {
   }
   groups.sort((a, b) => a.order - b.order);
   renderTree();
+  // Something is always shown: the category in the link, else the last one opened here, else the first one.
   const m = location.hash.match(/cat=(\d+)/);
-  if (m) open(Number(m[1]));
+  const last = store.get('cm-ach-cat');
+  const first = groups.flatMap((g) => g.categories.map((id) => categories.get(id)).filter(Boolean).sort((a, b) => a.order - b.order))[0];
+  const pick = [m && Number(m[1]), last, first?.id].find((id) => id && categories.has(id));
+  if (pick) open(pick);
 }
 
 function renderTree(q = '') {
@@ -42,6 +46,7 @@ function renderTree(q = '') {
 async function open(catId) {
   const c = categories.get(catId);
   if (!c) return;
+  store.set('cm-ach-cat', catId);
   cats.querySelectorAll('[aria-current]').forEach((a) => a.removeAttribute('aria-current'));
   const link = cats.querySelector(`[data-cat="${catId}"]`);
   if (link) { link.setAttribute('aria-current', 'true'); link.closest('details').open = true; }

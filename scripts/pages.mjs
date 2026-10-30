@@ -99,7 +99,7 @@ ${noscript(lang)}
     <input id="acf" type="search" placeholder="${esc(t(lang, 'ach.search'))}" autocomplete="off">
     <div id="acats" class="cat-tree"><p class="muted">${esc(t(lang, 'loading'))}</p></div>
   </aside>
-  <section id="alist" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'ach.pick'))}</p></section>
+  <section id="alist" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></section>
 </div>`;
 }
 
