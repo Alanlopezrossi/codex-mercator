@@ -88,7 +88,10 @@ function wikiCredit(lang, it) {
 
 function acquisitionHtml(lang, it) {
   const w = it.w;
-  if (!w || (!w.sold && !w.cont && !w.gath)) return '';
+  // The wiki sometimes lists the item inside its own containers: those entries are dropped.
+  const cont = (w?.cont || []).filter((e) => e.id !== it.id);
+  const gath = (w?.gath || []).filter((e) => e.id !== it.id);
+  if (!w || (!w.sold?.length && !cont.length && !gath.length)) return '';
   const li = L(lang);
   const isEs = lang === 'es';
   let html = '';
@@ -102,14 +105,14 @@ function acquisitionHtml(lang, it) {
     }).join('');
     html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-  const entries = (list) => `<ul class="ref-grid">${list.filter((e) => e.id !== it.id).map((e) => {
+  const entries = (list) => `<ul class="ref-grid">${list.map((e) => {
     const name = e.n[li] || e.n[1];
     const sub = (e.s?.[li] || '').replace(/^\((.*)\)$/, '$1').replace(/\) \(/g, ' · ');
     if (e.id && e.id !== it.id && it.refs?.[e.id]) return `<li>${refLink(lang, e.id, it.refs[e.id], 0, sub)}</li>`;
     return `<li><span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-body"><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${sub ? `<span class="ref-sub">${esc(sub)}</span>` : ''}</span></span></li>`;
   }).join('')}</ul>`;
-  if (w.cont?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(w.cont)}`;
-  if (w.gath?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(w.gath)}`;
+  if (cont.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(cont)}`;
+  if (gath.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(gath)}`;
   return `<section class="card" aria-labelledby="acq-h"><h2 id="acq-h">${esc(t(lang, 'item.acquisition'))}</h2>${html}${wikiCredit(lang, it)}</section>`;
 }
 
