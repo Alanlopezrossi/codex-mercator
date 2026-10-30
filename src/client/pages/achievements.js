@@ -39,7 +39,10 @@ async function init() {
   // Something is always shown: the category in the link, else the last one opened here, else the first one.
   const m = location.hash.match(/cat=(\d+)/);
   const last = store.get('cm-ach-cat');
-  const first = groups.flatMap((g) => g.categories.map((id) => categories.get(id)).filter(Boolean).sort((a, b) => a.order - b.order))[0];
+  // Default: the first category of "General achievements" (the daily group changes with the festivals).
+  const GENERAL = '56A82BB9-6B07-4AB0-89EE-E4A6D68F5C47';
+  const ordered = [...groups.filter((g) => g.id === GENERAL), ...groups.filter((g) => g.id !== GENERAL)];
+  const first = ordered.flatMap((g) => g.categories.map((id) => categories.get(id)).filter(Boolean).sort((a, b) => a.order - b.order))[0];
   const pick = [m && Number(m[1]), last, first?.id].find((id) => id && categories.has(id));
   if (pick) open(pick);
 }
