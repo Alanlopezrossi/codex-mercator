@@ -75,7 +75,7 @@ function forgeHtml(lang, it) {
   const f = it.w?.forge;
   if (!f?.length) return '';
   const blocks = f.map((r) => `<div class="recipe card-inner"><p class="recipe-meta"><span class="tag tag-forge">${esc(t(lang, 'item.forge'))}</span>${r.q > 1 ? ` · ${esc(t(lang, 'item.makes'))} ×${r.q}` : ''}</p>
-    <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-name" lang="en">${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
+    <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-name"${lang === 'es' ? ' lang="en"' : ''}>${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
   return `<section class="card" aria-labelledby="forge-h"><h2 id="forge-h">${esc(t(lang, 'item.forge'))}</h2>${blocks}${wikiCredit(lang, it)}</section>`;
 }
 
@@ -88,14 +88,35 @@ function wikiCredit(lang, it) {
 function acquisitionHtml(lang, it) {
   const w = it.w;
   if (!w || (!w.sold && !w.cont && !w.gath)) return '';
+  const li = L(lang);
+  const isEs = lang === 'es';
   let html = '';
   if (w.sold?.length) {
-    const head = lang === 'es' ? ['Vendedor', 'Zona', 'Costo', 'Notas'] : ['Vendor', 'Area', 'Cost', 'Notes'];
-    html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact" lang="en"><thead><tr>${head.map((h) => `<th scope="col" class="left" lang="${lang}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${w.sold.map(([v, area, zone, cost, notes]) => `<tr><td class="left">${esc(v)}</td><td class="left">${esc([area, zone].filter(Boolean).join(', '))}</td><td class="left">${esc(cost)}</td><td class="left small muted">${esc(notes === '-' ? '' : notes)}</td></tr>`).join('')}</tbody></table></div>`;
+    const head = isEs ? ['Vendedor', 'Zona', 'Costo', 'Notas'] : ['Vendor', 'Area', 'Cost', 'Notes'];
+    const rows = w.sold.map((r) => {
+      // Rows whose cost or note could not be translated keep the English text, marked as such.
+      const raw = isEs && r.en ? ' lang="en"' : '';
+      const where = [r.a?.[li], r.z?.[li]].filter(Boolean).join(', ');
+      return `<tr><td class="left">${esc(r.v[li])}</td><td class="left">${esc(where)}</td><td class="left"${raw}>${esc(r.c[li])}</td><td class="left small muted"${raw}>${esc(r.n[li])}</td></tr>`;
+    }).join('');
+    html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-  if (w.cont?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3><ul class="plain-list" lang="en">${w.cont.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
-  if (w.gath?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3><ul class="plain-list" lang="en">${w.gath.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
+  const entries = (list) => `<ul class="ref-grid">${list.map((e) => {
+    const name = e.n[li] || e.n[1];
+    const suffix = e.s?.[li] ? ` <span class="small muted">${esc(e.s[li])}</span>` : '';
+    if (e.id && e.id !== it.id) return `<li>${refLink(lang, e.id, it.refs?.[e.id]).replace('</a>', `${suffix}</a>`)}</li>`;
+    return `<li><span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${suffix}</span></li>`;
+  }).join('')}</ul>`;
+  if (w.cont?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(w.cont)}`;
+  if (w.gath?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(w.gath)}`;
   return `<section class="card" aria-labelledby="acq-h"><h2 id="acq-h">${esc(t(lang, 'item.acquisition'))}</h2>${html}${wikiCredit(lang, it)}</section>`;
+}
+
+function achHtml(lang, it) {
+  if (!it.ach?.length) return '';
+  const li = L(lang);
+  const kind = (k) => (k === 'r' ? (lang === 'es' ? 'recompensa' : 'reward') : (lang === 'es' ? 'parte de la colección' : 'collection part'));
+  return `<section class="card" aria-labelledby="ach-h"><h2 id="ach-h">${esc(t(lang, 'item.rewardedBy'))}</h2><ul class="plain-list">${it.ach.map(([, es, en, k]) => `<li><strong>${esc(li === 0 ? es : en)}</strong> <span class="small muted">· ${esc(kind(k))}</span></li>`).join('')}</ul><p class="small"><a href="${pagePath(lang, 'achievements')}">${esc(t(lang, 'nav.achievements'))} →</a></p></section>`;
 }
 
 function usedInHtml(lang, it) {
@@ -165,6 +186,7 @@ export function renderItemBody(lang, it) {
   ${recipesHtml(lang, it)}
   ${forgeHtml(lang, it)}
   ${acquisitionHtml(lang, it)}
+  ${achHtml(lang, it)}
   ${usedInHtml(lang, it)}
   <section class="card" aria-labelledby="links-h"><h2 id="links-h">${esc(t(lang, 'item.links'))}</h2>
     <ul class="link-list">${links.map(([u, l]) => `<li><a href="${esc(u)}" rel="noopener nofollow">${esc(l)}</a></li>`).join('')}</ul>

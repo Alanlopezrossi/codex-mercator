@@ -60,6 +60,10 @@ function floor(lang) {
   }
   const mapIndex = {};
   for (const r of Object.values(regions)) for (const m of Object.values(r.maps)) mapIndex[m.id] = m;
+  for (const sc of geo.sectors || []) {
+    const m = mapIndex[sc.map];
+    if (m) (m.sectors ||= {})[sc.id] = { id: sc.id, name: lang === 'es' ? sc.name : sc.nameEn, coord: sc.coord };
+  }
   for (const w of geo.waypoints) {
     const m = mapIndex[w.map];
     if (m) m.points_of_interest[w.id] = { id: w.id, name: lang === 'es' ? w.name : w.nameEn, type: 'waypoint', coord: w.coord, chat_link: w.chat };
@@ -73,5 +77,14 @@ write('recipes.json', recipes);
 write('prices.json', prices);
 write('floor-es.json', floor('es'));
 write('floor-en.json', floor('en'));
+let ach = { achievements: {}, items: {} };
+try { ach = read('src/ach-items.json'); } catch { /* optional */ }
+write('names.json', {
+  currencies: [],
+  maps: Object.values(geo.maps).map((m) => ({ id: m.id, en: m.nameEn, es: m.name })),
+  // The snapshot only has Spanish achievement names.
+  achievements: Object.entries(ach.achievements).map(([id, a]) => ({ id: Number(id), en: a[0], es: a[0] })),
+  achRefs: ach.items,
+});
 write('meta.json', { source: 'snapshot', fetchedAt: new Date(read('data/prices.json').at).toISOString() });
 console.log(`[snapshot] items ${es.length}, recipes ${recipes.length}, prices ${prices.length}`);

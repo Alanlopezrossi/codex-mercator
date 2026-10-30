@@ -103,13 +103,15 @@ export default {
     }
     const path = url.pathname;
     try {
-      if (path === '/' || path === '') return redirect(`/${preferredLang(request)}/`, 302);
+      // English by default; the Events page is the home page.
+      if (path === '/' || path === '') return redirect(`/${DEFAULT_LANG}/`);
+      if (path === '/en/events' || path === '/es/eventos') return redirect(path.slice(0, 4));
       if (path === '/es' || path === '/en') return redirect(`${path}/`);
       const m = path.match(ITEM_RE);
       if (m) return await itemPage(request, env, ctx, m);
       // Short /item/123 links -> preferred language.
       const short = path.match(/^\/item\/(\d{1,7})\/?$/);
-      if (short) return redirect(`/${preferredLang(request)}/item/${short[1]}`, 302);
+      if (short) return redirect(`/${DEFAULT_LANG}/item/${short[1]}`);
       if (path.startsWith('/assets/') || path.startsWith('/data/')) {
         return new Response('Not found', { status: 404, headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=60', ...SEC } });
       }

@@ -1,5 +1,5 @@
 @echo off
-REM Codex Mercator: downloads the official API data and opens the site locally at http://localhost:8787
+REM Bazaar Ledger: downloads the official API data and opens the site locally at http://localhost:8787
 cd /d "%~dp0"
 where node >nul 2>nul || (echo Node.js is required: https://nodejs.org & pause & exit /b 1)
 if not exist node_modules (

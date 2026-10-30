@@ -1,6 +1,6 @@
 {
-  "name": "Codex Mercator",
-  "short_name": "Codex",
+  "name": "Bazaar Ledger",
+  "short_name": "Ledger",
   "description": "Unofficial Guild Wars 2 item database and live trading post.",
   "start_url": "/",
   "display": "standalone",

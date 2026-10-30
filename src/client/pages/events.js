@@ -21,8 +21,6 @@ const save = () => store.set(KEY, { cat: st.cat, range: st.range, top: st.top, h
 
 const form = $('#evFilters');
 const qEl = $('#evq');
-const catEl = $('#evc');
-const rangeEl = $('#evr');
 const topEl = $('#evtop');
 const tl = $('#evTimeline');
 const hiddenEl = $('#evHidden');
@@ -97,11 +95,12 @@ function renderTimeline(nowMin) {
         if (!seg || sg.r === '0') return `<div class="evt-seg evt-empty" data-w="${w}" aria-hidden="true"></div>`;
         const on = sg.start <= nowMin && sg.end > nowMin;
         const future = sg.start >= limit;
-        const cls = ['evt-seg', future ? 'future' : '', on ? 'on' : '', future || isDark(seg.col) ? 'dark' : '', seg.pos ? 'has-map' : ''].filter(Boolean).join(' ');
+        const cls = ['evt-seg', future ? 'future' : '', on ? 'on' : '', !future && isDark(seg.col) ? 'dark' : '', seg.pos ? 'has-map' : ''].filter(Boolean).join(' ');
         const label = seg.n[li] || seg.n[1];
         const title = `${label}${seg.n[1] !== label ? ` (${seg.n[1]})` : ''} · ${timeOf(sg.start)}–${timeOf(sg.end)} (${sg.end - sg.start} min)`;
         const link = mapLink(seg, ev);
-        return `<div class="${cls}" data-w="${w}" data-bg="${esc(bgOf(seg.col))}" title="${esc(title)}">
+        // Future segments: neutral background with the event color as a top band (keeps the text readable).
+        return `<div class="${cls}" data-w="${w}" ${future ? `data-band="${esc(bgOf(seg.col))}"` : `data-bg="${esc(bgOf(seg.col))}"`} title="${esc(title)}">
           <span class="evt-time">${esc(timeOf(sg.start))}</span>
           ${link ? `<a class="evt-name" href="${esc(link)}" title="${esc(t('ev.onMap'))}">${esc(label)}</a>` : `<span class="evt-name">${esc(label)}</span>`}
           ${seg.wp ? `<button type="button" class="evt-chat" data-copy="${esc(seg.wp)}" aria-label="${esc(t('copy'))} ${esc(seg.wp)}">${esc(seg.wp)}</button>` : ''}
@@ -115,6 +114,7 @@ function renderTimeline(nowMin) {
   tl.innerHTML = html;
   for (const el of tl.querySelectorAll('[data-w]')) el.style.width = `${el.dataset.w}%`;
   for (const el of tl.querySelectorAll('[data-bg]')) if (el.dataset.bg) el.style.background = el.dataset.bg;
+  for (const el of tl.querySelectorAll('[data-band]')) if (el.dataset.band) el.style.borderTop = `4px solid ${el.dataset.band.startsWith('linear') ? '#888' : el.dataset.band}`;
   for (const el of tl.querySelectorAll('[data-left]')) el.style.left = `${el.dataset.left}%`;
   const hid = events.filter((e) => st.hidden.has(e.key));
   hiddenEl.innerHTML = hid.length && !searching
@@ -175,17 +175,21 @@ async function init() {
     return;
   }
   const cats = [...new Map(events.map((e) => [e.c[1], e.c[li]])).entries()];
-  catEl.insertAdjacentHTML('beforeend', cats.map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join(''));
-  catEl.value = st.cat;
-  rangeEl.value = st.range;
+  // Category boxes (one row that wraps), same markup as the server-rendered chip groups.
+  const row = $('#evcats .chip-row');
+  row.insertAdjacentHTML('beforeend', cats.map(([k, v], i) => `<input type="radio" class="chip-input" name="evc" id="evc-c${i}" value="${esc(k)}"><label class="chip" for="evc-c${i}">${esc(v)}</label>`).join(''));
+  form.evc.value = st.cat;
+  form.evr.value = st.range;
   topEl.checked = st.top;
   const params = new URLSearchParams(location.search);
   if (params.get('q')) { qEl.value = params.get('q'); st.q = qEl.value; }
 
   form.addEventListener('submit', (e) => e.preventDefault());
   qEl.addEventListener('input', debounce(() => { st.q = qEl.value; render(); }, 150));
-  catEl.addEventListener('change', () => { st.cat = catEl.value; save(); render(); });
-  rangeEl.addEventListener('change', () => { st.range = rangeEl.value; save(); render(); });
+  form.addEventListener('change', (e) => {
+    if (e.target.name === 'evc') { st.cat = form.evc.value; save(); render(); }
+    if (e.target.name === 'evr') { st.range = form.evr.value; save(); render(); }
+  });
   topEl.addEventListener('change', () => { st.top = topEl.checked; save(); render(); });
   document.addEventListener('click', (e) => {
     const h = e.target.closest('[data-hide]');

@@ -1,8 +1,33 @@
-// Calculator: coin operations and trading post fees (with an item's live price).
+// Calculator: two separate tools in tabs (coin calculator, trading post fees).
 import { $, $$, lang, t } from '../lib/env.js';
 import { autocomplete } from '../lib/autocomplete.js';
 import { prices } from '../lib/gw2.js';
 import { esc, coin, listFee, saleFee } from '../../shared/format.js';
+
+// Tabs (ARIA pattern); the open tab is kept in the URL hash.
+const tabs = $$('[role="tab"]');
+function select(id, focus) {
+  for (const tb of tabs) {
+    const on = tb.id === `tab-${id}`;
+    tb.setAttribute('aria-selected', String(on));
+    tb.tabIndex = on ? 0 : -1;
+    $(`#${tb.getAttribute('aria-controls')}`).hidden = !on;
+    if (on && focus) tb.focus();
+  }
+  history.replaceState(null, '', `#${id}`);
+}
+for (const tb of tabs) {
+  tb.addEventListener('click', () => select(tb.id.slice(4)));
+  tb.addEventListener('keydown', (e) => {
+    const i = tabs.indexOf(tb);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+      select(n.id.slice(4), true);
+    }
+  });
+}
+if (location.hash === '#tp') select('tp');
 
 const readCoins = (p) => {
   const n = (id) => Math.max(0, Math.floor(Number(String($(`#${p}${id}`).value).replace(/\D/g, '')) || 0));
@@ -25,16 +50,17 @@ for (const b of $$('[data-op]')) {
   b.addEventListener('click', () => {
     const op = b.dataset.op;
     const v = readCoins('c');
-    const f = Number(String($('#cf').value).replace(',', '.'));
+    const raw = $('#cf').value;
+    const f = Number(String(raw).replace(',', '.'));
     const before = acc;
     if (op === 'add') acc += v;
     if (op === 'sub') acc -= v;
-    if (op === 'mul') acc = Math.round(acc * (Number.isFinite(f) && $('#cf').value !== '' ? f : 1));
-    if (op === 'div') { const d = Number.isFinite(f) && f ? f : 1; acc = Math.round(acc / d); }
+    if (op === 'mul') acc = Math.round(acc * (raw !== '' && Number.isFinite(f) ? f : 1));
+    if (op === 'div') acc = Math.round(acc / (Number.isFinite(f) && f ? f : 1));
     const sym = { add: '+', sub: '−', mul: '×', div: '÷' }[op];
-    const arg = op === 'add' || op === 'sub' ? coin(v, { lang }) : esc($('#cf').value || '1');
-    hist.insertAdjacentHTML('afterbegin', `<li>${coin(before, { lang })} ${sym} ${arg} = ${coin(acc, { lang })}</li>`);
-    while (hist.children.length > 8) hist.lastElementChild.remove();
+    const arg = op === 'add' || op === 'sub' ? coin(v, { lang }) : esc(raw || '1');
+    hist.insertAdjacentHTML('afterbegin', `<li>${coin(before, { lang })} ${sym} ${arg} = <strong>${coin(acc, { lang })}</strong></li>`);
+    while (hist.children.length > 10) hist.lastElementChild.remove();
     showAcc();
   });
 }

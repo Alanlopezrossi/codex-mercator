@@ -8,6 +8,7 @@ import { LANGS, RARITIES, TYPE_KEYS, slugify } from '../src/shared/i18n.js';
 import { SHARD_SIZE, shardOf } from '../src/shared/data.js';
 import { renderStaticPages } from './pages.mjs';
 import { securityHeaders } from '../src/shared/security.js';
+import { makeTranslator } from './lib/wiki-i18n.mjs';
 
 const ROOT = path.resolve('.');
 const RAW = path.join(ROOT, '.cache/raw');
@@ -27,7 +28,8 @@ const floorEs = readRaw('floor-es.json');
 const floorEn = readRaw('floor-en.json');
 const wiki = readData('wiki-data.json');
 const timers = readData('event-timers.json');
-const eventNamesEs = readData('event-names-es.json');
+const eventNames = readData('event-names.json');
+const names = fs.existsSync(path.join(RAW, 'names.json')) ? readRaw('names.json') : { currencies: [], maps: [], achievements: [] };
 
 const isApi = rawMeta.source === 'api';
 const MIN = isApi ? { items: 60000, recipes: 10000, prices: 20000 } : { items: 1000, recipes: 1000, prices: 1000 };
@@ -106,24 +108,55 @@ for (const r of recipes) {
     s.add(r.output_item_id);
   }
 }
+// Place names (regions, maps, areas, points of interest) English -> Spanish, from the official floor data.
+const places = new Map();
+for (const m of names.maps) if (m.en && m.es) places.set(m.en, m.es);
+for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
+  const regEn = floorEn.regions?.[rid];
+  if (regEn?.name) places.set(regEn.name, reg.name);
+  for (const [mid, m] of Object.entries(reg.maps || {})) {
+    const mEn = regEn?.maps?.[mid];
+    if (!mEn) continue;
+    if (mEn.name) places.set(mEn.name, m.name);
+    for (const [sid, sc] of Object.entries(m.sectors || {})) if (mEn.sectors?.[sid]?.name) places.set(mEn.sectors[sid].name, sc.name);
+    for (const [pid, p] of Object.entries(m.points_of_interest || {})) if (mEn.points_of_interest?.[pid]?.name) places.set(mEn.points_of_interest[pid].name, p.name);
+  }
+}
+const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
+const W = makeTranslator({ items, currencies: names.currencies, places, achievements });
+let wikiTotal = 0;
+let wikiOk = 0;
+const tally = (ok) => { wikiTotal++; if (ok) wikiOk++; return ok; };
+// The extraction sometimes glued several areas together ("Grand PiazzaFort Marriner..."): we drop those.
+const glued = (x) => /[a-z'][A-Z]/.test(x || '');
 for (const [k, w] of Object.entries(wiki.items)) {
   const it = items.get(Number(k));
   if (!it) continue;
   const ww = { title: w.title };
   if (w.forge) {
-    ww.forge = w.forge;
-    for (const f of w.forge) for (const [id] of f.i) if (id) {
-      let s = usedIn.get(id);
-      if (!s) usedIn.set(id, (s = new Set()));
-      s.add(it.id);
+    // Ingredients without an ID: look the item up by its English name.
+    ww.forge = w.forge.map((f) => ({ q: f.q, i: f.i.map(([id, n, title]) => [id || W.itemByEn.get(title)?.id || 0, n, title]) }));
+    for (const f of ww.forge) for (const [id] of f.i) if (id) {
+      let st = usedIn.get(id);
+      if (!st) usedIn.set(id, (st = new Set()));
+      st.add(it.id);
     }
   }
-  // The extraction sometimes glued several areas together ("Grand PiazzaFort Marriner..."): we drop those and keep the zone.
-  if (w.sold) ww.sold = w.sold.map(([v, area, zone, cost, notes]) => [v, /[a-z'][A-Z]/.test(area || '') ? '' : area, /[a-z'][A-Z]/.test(zone || '') ? '' : zone, cost, notes]);
-  if (w.cont) ww.cont = w.cont;
-  if (w.gath) ww.gath = w.gath;
+  if (w.sold) {
+    ww.sold = w.sold.map(([v, area, zone, cost, notes]) => {
+      const c = W.cost(cost);
+      const nt = W.note(notes);
+      tally(c[2]); tally(nt[2]);
+      return { v: W.vendor(v), a: W.place(glued(area) ? '' : area), z: W.place(glued(zone) ? '' : zone), c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+    });
+  }
+  for (const key of ['cont', 'gath']) {
+    if (!w[key]) continue;
+    ww[key] = w[key].map((raw) => { const e = W.entry(raw); tally(e.ok); return e; });
+  }
   it.w = ww;
 }
+console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
 const priceMap = new Map();
 for (const p of prices) priceMap.set(p.id, [p.buys?.unit_price || 0, p.buys?.quantity || 0, p.sells?.unit_price || 0, p.sells?.quantity || 0]);
 
@@ -140,6 +173,15 @@ for (const [id, set] of usedIn) {
 }
 for (const it of items.values()) if (priceMap.has(it.id)) it.tp = 1;
 
+// Achievements that reward an item (r) or ask for it (p, collections).
+const achById = new Map(names.achievements.map((a) => [a.id, [a.es, a.en]]));
+for (const [id, refs] of Object.entries(names.achRefs || {})) {
+  const it = items.get(Number(id));
+  if (!it) continue;
+  const list = refs.map(([aid, kind]) => (achById.has(aid) ? [aid, ...achById.get(aid), kind] : null)).filter(Boolean);
+  if (list.length) it.ach = list.slice(0, 12);
+}
+
 // ---------- 4. Shards with denormalized references ----------
 fs.rmSync(DIST, { recursive: true, force: true });
 const DATA = path.join(DIST, 'data', dataVersion);
@@ -150,6 +192,7 @@ for (const it of items.values()) {
   const refIds = new Set();
   for (const r of it.rc || []) for (const [id] of r.i) refIds.add(id);
   for (const f of it.w?.forge || []) for (const [id] of f.i) if (id) refIds.add(id);
+  for (const e of [...(it.w?.cont || []), ...(it.w?.gath || [])]) if (e.id) refIds.add(e.id);
   for (const id of it.u || []) refIds.add(id);
   if (it.x.sfx) refIds.add(it.x.sfx);
   const refs = {};
@@ -189,6 +232,39 @@ fs.mkdirSync(path.join(DIST, 'data/search'), { recursive: true });
 fs.writeFileSync(path.join(DIST, searchFile), searchTsv);
 const priceLines = [...priceMap.entries()].sort((a, b) => a[0] - b[0]).filter(([id]) => items.has(id)).map(([id, p]) => [id, ...p].join('\t'));
 fs.writeFileSync(path.join(DATA, 'prices.tsv'), priceLines.join('\n'));
+// Trading post table per language (name + prices in one small file, so the page does not need the full search index).
+for (const [li, lang] of LANGS.entries()) {
+  const rows = [];
+  for (const [id, p] of [...priceMap.entries()].sort((a, b) => a[0] - b[0])) {
+    const it = items.get(id);
+    if (!it || (!p[0] && !p[2])) continue;
+    const name = it.n[li] || it.n[1 - li];
+    if (hidden(name)) continue;
+    const other = it.n[1 - li] && it.n[1 - li] !== name ? it.n[1 - li] : '';
+    rows.push([id, tsvSafe(name), tsvSafe(other), rarityRank[it.r] ?? 1, typeIdx[it.t] ?? -1, ...p].join('\t'));
+  }
+  fs.writeFileSync(path.join(DATA, `tp-${lang}.tsv`), rows.join('\n'));
+}
+
+// Legendary and ascended gear: one row per item with how to get it (bit flags) and the icon.
+const SRC = { forge: 1, craft: 2, ach: 4, vendor: 8, container: 16, tp: 32 };
+const GEAR_TYPES = new Set(['Weapon', 'Armor', 'Trinket', 'Back', 'UpgradeComponent', 'Relic', 'Gathering', 'Tool']);
+const gear = [];
+for (const it of items.values()) {
+  if (it.r !== 'Legendary' && it.r !== 'Ascended') continue;
+  if (!GEAR_TYPES.has(it.t)) continue;
+  if (hidden(it.n[0]) && hidden(it.n[1])) continue;
+  let src = 0;
+  if (it.w?.forge) src |= SRC.forge;
+  if (it.rc?.length) src |= SRC.craft;
+  if (it.ach?.length) src |= SRC.ach;
+  if (it.w?.sold?.length) src |= SRC.vendor;
+  if (it.w?.cont?.length) src |= SRC.container;
+  if (it.tp) src |= SRC.tp;
+  gear.push([it.id, it.n[0], it.n[1], it.r === 'Legendary' ? 1 : 0, it.t, it.st || '', it.x.w || '', src, it.ic, it.l]);
+}
+gear.sort((a, b) => b[3] - a[3] || a[4].localeCompare(b[4]) || a[2].localeCompare(b[2]));
+fs.writeFileSync(path.join(DATA, 'gear.json'), JSON.stringify({ src: SRC, rows: gear }));
 
 // ---------- 6. Map of Tyria (maps and waypoints) ----------
 function compactFloor() {
@@ -215,22 +291,30 @@ const geo = compactFloor();
 fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
 
 // ---------- 7. Events ----------
-// Each segment: name es/en, waypoint, wiki page, color (as in the wiki timer) and map position (exact point or its waypoint).
-const mapEs = new Map(geo.maps.map((m) => [m.n[1], m.n[0]]));
+// Names: data/event-names.json (curated, game names) and, for maps, the official API.
+const mapEs = new Map([...names.maps.map((m) => [m.en, m.es]), ...geo.maps.map((m) => [m.n[1], m.n[0]])]);
 const wpByChat = new Map(geo.wps.map((w) => [w.chat, w]));
-const esName = (en) => eventNamesEs.names[en] || mapEs.get(en) || en;
+const missingEv = new Set();
+const evName = (en, dict = eventNames.names) => {
+  if (!en) return ['', ''];
+  const d = dict[en];
+  const es = d?.es || mapEs.get(en);
+  if (!es) missingEv.add(en);
+  return [es || en, d?.en || en];
+};
 const events = Object.entries(timers.events).map(([key, ev]) => ({
   key,
-  c: [eventNamesEs.categories[ev.c] || ev.c, ev.c],
-  n: [esName(ev.n), ev.n],
+  c: evName(ev.c, eventNames.categories),
+  n: evName(ev.n),
   s: Object.fromEntries(Object.entries(ev.s).map(([k, sg]) => {
     const wp = sg[2] ? wpByChat.get(sg[2]) : null;
     const pos = Array.isArray(sg[4]) ? sg[4].map(Math.round) : wp ? wp.c : null;
-    return [k, { n: [esName(sg[0]), sg[0]], wp: sg[2] || '', wiki: sg[1] || '', col: sg[3] || null, pos, wpn: wp ? wp.n : null }];
+    return [k, { n: evName(sg[0]), wp: sg[2] || '', wiki: sg[1] || '', col: sg[3] || null, pos, wpn: wp ? wp.n : null }];
   })),
   p: ev.p,
   q: ev.q,
 }));
+if (missingEv.size) console.warn(`[build] events without a Spanish name (shown in English): ${[...missingEv].join(', ')}`);
 fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, v: timers.v, events }));
 
 // ---------- 8. Metadata ----------
@@ -251,7 +335,7 @@ await esbuild.build({
   loader: { '.png': 'file', '.svg': 'file' }, assetNames: 'img/[name]-[hash]', external: ['*.woff2'],
 });
 fs.mkdirSync(path.join(tmpAssets, 'fonts'), { recursive: true });
-for (const f of ['cinzel-latin-600-normal.woff2', 'cinzel-latin-700-normal.woff2']) {
+for (const f of ['cinzel-latin-700-normal.woff2']) {
   fs.copyFileSync(path.join('node_modules/@fontsource/cinzel/files', f), path.join(tmpAssets, 'fonts', f));
 }
 const hash = crypto.createHash('sha256');
@@ -268,8 +352,8 @@ fs.cpSync('static', DIST, { recursive: true });
 const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile };
 const POPULAR = [19721, 19976, 19675, 24295, 19685, 24277, 30689, 46731];
 const popular = POPULAR.map((id) => items.get(id)).filter(Boolean).map((o) => ({ id: o.id, n: o.n, ic: o.ic, r: o.r }));
-const CONTACT = process.env.CONTACT_EMAIL || 'contacto@codexmercator.com';
-const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular })).map(([k, v]) => [k, v.replaceAll('contacto@codexmercator.com', CONTACT)]));
+const CONTACT = process.env.CONTACT_EMAIL || 'contact@bazaarledger.com';
+const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');
   const file = p.endsWith('/') ? f : `${f}.html`;

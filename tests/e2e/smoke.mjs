@@ -14,10 +14,10 @@ const MOCK = process.env.MOCK_API === '1';
 fs.mkdirSync(OUT, { recursive: true });
 
 const PAGES = [
-  ['home-es', '/es/'], ['home-en', '/en/'], ['items-es', '/es/items?q=ecto'], ['item-es', '/es/item/19721'],
+  ['home-es', '/es/'], ['home-en', '/en/'], ['root', '/'], ['items-es', '/es/items?q=ecto'], ['item-es', '/es/item/19721'],
   ['item-en', '/en/item/30689'], ['item-forge-es', '/es/item/30704'], ['bazaar-es', '/es/bazar'], ['bazaar-en', '/en/trading-post'],
-  ['achievements-es', '/es/logros'], ['professions-en', '/en/professions'], ['events-es', '/es/eventos'], ['map-es', '/es/mapa'],
-  ['calculator-es', '/es/calculadora'], ['favorites-es', '/es/favoritos'], ['legal-es', '/es/legal'], ['privacy-en', '/en/privacy'],
+  ['achievements-es', '/es/logros'], ['professions-en', '/en/professions'], ['gear-es', '/es/legendarios'], ['gear-en', '/en/legendary?rarity=1&slot=Weapon'], ['map-es', '/es/mapa'],
+  ['calculator-es', '/es/calculadora'], ['calculator-tp-en', '/en/calculator#tp'], ['favorites-es', '/es/favoritos'], ['legal-es', '/es/legal'], ['privacy-en', '/en/privacy'],
   ['about-es', '/es/acerca'], ['notfound-es', '/es/no-existe'],
 ];
 
@@ -86,7 +86,7 @@ for (const [name, url] of PAGES) {
 }
 
 // Mobile and light theme
-for (const [name, url, theme] of [['home-es', '/es/', 'dark'], ['item-es', '/es/item/19721', 'dark'], ['bazaar-es', '/es/bazar', 'light'], ['items-en', '/en/items?q=mithril', 'light']]) {
+for (const [name, url, theme] of [['home-es', '/es/', 'dark'], ['gear-en', '/en/legendary', 'dark'], ['map-en', '/en/map', 'dark'], ['calc-en', '/en/calculator', 'light'], ['item-es', '/es/item/19721', 'dark'], ['bazaar-es', '/es/bazar', 'light'], ['items-en', '/en/items?q=mithril', 'light']]) {
   const { ctx, page } = await newPage({ width: 390, height: 844 }, theme);
   await page.goto(BASE + url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);

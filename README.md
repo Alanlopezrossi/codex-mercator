@@ -1,6 +1,6 @@
-# Codex Mercator
+# Bazaar Ledger
 
-**Codex Mercator** is an unofficial Guild Wars 2 fan site, in Spanish and English: the full item database (about 74,000 items), recipes, Mystic Forge, acquisition info, a live trading post, achievements, professions, events, a map of Tyria and a calculator. It runs entirely on **Cloudflare Workers (free plan)**.
+**Bazaar Ledger** is an unofficial Guild Wars 2 fan site, in Spanish and English: the full item database (about 74,000 items), recipes, Mystic Forge, acquisition info, a live trading post, achievements, professions, events, a map of Tyria and a calculator. It runs entirely on **Cloudflare Workers (free plan)**.
 
 > Unofficial fan site. Not affiliated with ArenaNet or NCSOFT. See [Legal](#legal).
 

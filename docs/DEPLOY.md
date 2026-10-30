@@ -20,7 +20,7 @@ git push -u origin main
    - **Deploy command:** `npx wrangler deploy`
    - **Root directory:** `/`
 3. Under **Build variables** add:
-   - `SITE_URL` = `https://codexmercator.com` (or the `*.workers.dev` URL while you have no domain)
+   - `SITE_URL` = `https://bazaarledger.com` (or the `*.workers.dev` URL while you have no domain)
    - `CONTACT_EMAIL` = the email for takedown requests and contact
 4. **Deploy.** The first build takes ~4 minutes (it downloads the whole API).
 

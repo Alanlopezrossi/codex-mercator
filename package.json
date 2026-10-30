@@ -2,7 +2,7 @@
   "name": "codex-mercator",
   "version": "1.0.0",
   "private": true,
-  "description": "Codex Mercator: unofficial Guild Wars 2 fansite with the full item database and live trading post prices, in Spanish and English. Runs on Cloudflare Workers.",
+  "description": "Bazaar Ledger: unofficial Guild Wars 2 fansite with the full item database and live trading post prices, in Spanish and English. Runs on Cloudflare Workers.",
   "type": "module",
   "license": "MIT",
   "engines": {

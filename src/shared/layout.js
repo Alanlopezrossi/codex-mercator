@@ -2,7 +2,7 @@
 import { esc } from './format.js';
 import { LANGS, ROUTES, SITE_NAME, pagePath, t } from './i18n.js';
 
-const NAV = ['items', 'bazaar', 'achievements', 'professions', 'events', 'map', 'calculator'];
+const NAV = ['events', 'bazaar', 'items', 'gear', 'achievements', 'professions', 'map', 'calculator'];
 
 const ICONS = {
   search: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -12,7 +12,7 @@ const ICONS = {
 };
 export { ICONS };
 
-export const LOGO = '<svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16 2 29 9v14L16 30 3 23V9Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 8v16M10 12h12M11 20h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+export const LOGO = '<svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><ellipse cx="13" cy="8" rx="9" ry="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 8v5c0 1.9 4 3.5 9 3.5s9-1.6 9-3.5V8M4 13v5c0 1.9 4 3.5 9 3.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="17" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21h6M20 25h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 /**
  * @param {object} o
@@ -67,6 +67,10 @@ ${hreflang}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preload" href="${A}/fonts/cinzel-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://api.guildwars2.com" crossorigin>
+<link rel="preconnect" href="https://render.guildwars2.com">
+${(o.scripts || []).map((s) => `<link rel="modulepreload" href="${A}/pages/${s}.js">`).join('')}
+<link rel="modulepreload" href="${A}/common.js">
 <link rel="stylesheet" href="${A}/main.css">
 ${(o.styles || []).map((s) => `<link rel="stylesheet" href="${A}/${s}.css">`).join('')}
 <script src="${A}/theme.js"></script>
@@ -76,7 +80,7 @@ ${ld}
 <a class="skip" href="#main">${esc(t(lang, 'skip'))}</a>
 <header class="site-header">
   <div class="wrap header-row">
-    <a class="brand" href="${pagePath(lang, 'home')}">${LOGO}<span class="brand-name">Codex <b>Mercator</b></span><span class="sr-only"> — ${esc(t(lang, 'fansite'))}</span></a>
+    <a class="brand" href="${pagePath(lang, 'home')}">${LOGO}<span class="brand-name">Bazaar <b>Ledger</b></span><span class="sr-only"> — ${esc(t(lang, 'fansite'))}</span></a>
     <form class="hsearch" role="search" action="${pagePath(lang, 'items')}" method="get">
       <label class="sr-only" for="hq">${esc(t(lang, 'searchLabel'))}</label>
       <input id="hq" name="q" type="search" placeholder="${esc(t(lang, 'searchPlaceholder'))}" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="hq-list" aria-expanded="false" role="combobox">
@@ -102,7 +106,7 @@ ${o.body}
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div>
-      <p class="brand-foot">${LOGO}<span>Codex <b>Mercator</b></span></p>
+      <p class="brand-foot">${LOGO}<span>Bazaar <b>Ledger</b></span></p>
       <p class="small">${esc(t(lang, 'footerDisclaimer'))}</p>
       <p class="small muted">${esc(t(lang, 'footerData'))}</p>
     </div>

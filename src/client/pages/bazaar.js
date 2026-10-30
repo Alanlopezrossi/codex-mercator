@@ -1,6 +1,6 @@
-// Trading post: build snapshot of every price + live refresh of the visible rows.
+// Trading post: one small file per language with name + prices (build snapshot), then the visible rows refresh live.
 import { $, lang, t, debounce, relTime } from '../lib/env.js';
-import { loadIndex, search, nameOf, index } from '../lib/search.js';
+import { norm, chatCodeId } from '../lib/search.js';
 import { prices as livePrices, items as apiItems } from '../lib/gw2.js';
 import { esc, coin, num, margin, iconUrl } from '../../shared/format.js';
 import { RARITIES, itemPath } from '../../shared/i18n.js';
@@ -13,7 +13,8 @@ const stampEl = $('#bstamp');
 const table = $('#btable');
 const dataBase = document.body.dataset.data;
 
-let all = new Map(); // id -> {buy, buyQty, sell, sellQty}
+let all = []; // {id, name, other, key, r, ty, buy, buyQty, sell, sellQty}
+const byId = new Map();
 let rows = [];
 let page = 0;
 let sort = { key: 'demand', dir: -1 };
@@ -32,36 +33,38 @@ function readParams() {
 }
 function writeParams() {
   const p = new URLSearchParams();
-  for (const k of ['q', 'type', 'rarity', 'dmin']) if (form[k].value.trim()) p.set(k, form[k].value.trim());
+  for (const k of ['q', 'type', 'rarity', 'dmin']) if (String(form[k].value).trim()) p.set(k, String(form[k].value).trim());
   if (!(sort.key === 'demand' && sort.dir === -1)) p.set('sort', `${sort.key}.${sort.dir > 0 ? 'asc' : 'desc'}`);
   if (page) p.set('page', String(page + 1));
   const qs = p.toString();
   history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
 }
 
-const val = (id, k) => {
-  const v = all.get(id);
-  if (!v) return 0;
-  if (k === 'margin') return margin(v.buy, v.sell) ?? -Infinity;
-  if (k === 'supply') return v.sellQty;
-  if (k === 'demand') return v.buyQty;
-  return v[k] || 0;
+const val = (r, k) => {
+  if (k === 'margin') return margin(r.buy, r.sell) ?? -Infinity;
+  if (k === 'supply') return r.sellQty;
+  if (k === 'demand') return r.buyQty;
+  return r[k] || 0;
 };
 
 function run() {
-  const nn = (v) => (v === '' ? null : Number(v));
-  const pos = search(form.q.value, { type: nn(form.type.value), rarity: nn(form.rarity.value), tp: true });
+  const q = norm(form.q.value);
+  const words = q.split(/\s+/).filter(Boolean);
+  const id = /^\d+$/.test(q) ? Number(q) : chatCodeId(form.q.value);
+  const type = form.type.value === '' ? null : Number(form.type.value);
+  const rar = form.rarity.value === '' ? null : Number(form.rarity.value);
   const dmin = Number(form.dmin.value) || 0;
-  rows = pos.map((p) => index.ids[p]).filter((id) => all.has(id) && (all.get(id).buy || all.get(id).sell) && (!dmin || all.get(id).buyQty >= dmin));
-  const q = form.q.value.trim();
-  if (sort.key === 'name') {
-    rows.sort((a, b) => sort.dir * nameOf(index.byId.get(a), lang).localeCompare(nameOf(index.byId.get(b), lang), lang));
-  } else if (!q || sort.key !== 'demand' || sort.dir !== -1) {
-    // With a search and the default order we keep relevance; otherwise we sort by the chosen column.
-    rows.sort((a, b) => sort.dir * (val(a, sort.key) - val(b, sort.key)) || a - b);
-  }
+  rows = all.filter((r) => (type == null || r.ty === type) && (rar == null || r.r === rar) && (!dmin || r.buyQty >= dmin)
+    && (id != null ? r.id === id : words.every((w) => r.key.includes(w))));
+  if (sort.key === 'name') rows.sort((a, b) => sort.dir * a.name.localeCompare(b.name, lang));
+  else rows.sort((a, b) => sort.dir * (val(a, sort.key) - val(b, sort.key)) || a.id - b.id);
   if (page * PAGE >= rows.length) page = 0;
   render();
+}
+
+function cells(r) {
+  const m = margin(r.buy, r.sell);
+  return `<td class="num">${coin(r.buy, { lang })}</td><td class="num">${coin(r.sell, { lang })}</td><td class="num ${m != null && m > 0 ? 'pos' : 'neg-c'}">${m == null ? '—' : coin(m, { lang })}</td><td class="num">${num(r.sellQty, lang)}</td><td class="num">${num(r.buyQty, lang)}</td>`;
 }
 
 function render() {
@@ -76,41 +79,32 @@ function render() {
     pager.innerHTML = '';
     return;
   }
-  body.innerHTML = slice.map((id) => {
-    const pos = index.byId.get(id);
-    const name = nameOf(pos, lang);
-    const r = RARITIES[index.rarity[pos]] || 'Basic';
-    return `<tr data-id="${id}"><th scope="row" class="left"><a class="item-cell" href="${itemPath(lang, id, name)}"><span class="ic ic-ph" data-icon="${id}" aria-hidden="true"></span><span class="r-txt-${r}">${esc(name)}</span></a></th>${cells(id)}</tr>`;
-  }).join('');
+  body.innerHTML = slice.map((r) => `<tr data-id="${r.id}"><th scope="row" class="left"><a class="item-cell" href="${itemPath(lang, r.id, r.name)}"><span class="ic ic-ph" data-icon="${r.id}" aria-hidden="true"></span><span class="r-txt-${RARITIES[r.r] || 'Basic'}">${esc(r.name)}</span></a></th>${cells(r)}</tr>`).join('');
   const pages = Math.ceil(rows.length / PAGE);
   pager.innerHTML = `<button class="btn" type="button" data-go="-1" ${page === 0 ? 'disabled' : ''}>${esc(t('prev'))}</button>
     <span>${esc(t('page'))} ${page + 1} ${esc(t('of'))} ${num(pages, lang)} · ${num(rows.length, lang)} ${esc(t('results'))}</span>
     <button class="btn" type="button" data-go="1" ${page >= pages - 1 ? 'disabled' : ''}>${esc(t('next'))}</button>`;
-  refreshVisible(slice);
+  refreshVisible(slice.map((r) => r.id));
 }
 
-function cells(id) {
-  const v = all.get(id) || {};
-  const m = margin(v.buy, v.sell);
-  return `<td class="num" data-c="buy">${coin(v.buy, { lang })}</td><td class="num" data-c="sell">${coin(v.sell, { lang })}</td><td class="num ${m != null && m > 0 ? 'pos' : 'neg-c'}" data-c="margin">${m == null ? '—' : coin(m, { lang })}</td><td class="num" data-c="supply">${num(v.sellQty, lang)}</td><td class="num" data-c="demand">${num(v.buyQty, lang)}</td>`;
-}
-
-async function refreshVisible(ids = rows.slice(page * PAGE, page * PAGE + PAGE)) {
+async function refreshVisible(ids = rows.slice(page * PAGE, page * PAGE + PAGE).map((r) => r.id)) {
   if (!ids.length) return;
   try {
     const [p, its] = await Promise.all([livePrices(ids), apiItems(ids, lang).catch(() => new Map())]);
     for (const [id, v] of p) {
-      all.set(id, v);
+      const r = byId.get(id);
+      if (!r) continue;
+      Object.assign(r, v);
       const tr = body.querySelector(`tr[data-id="${id}"]`);
       if (!tr) continue;
       tr.querySelectorAll('td').forEach((td) => td.remove());
-      tr.insertAdjacentHTML('beforeend', cells(id));
+      tr.insertAdjacentHTML('beforeend', cells(r));
     }
     for (const [id, it] of its) {
       const ph = body.querySelector(`[data-icon="${id}"]`);
       if (ph && it.icon) {
         const img = document.createElement('img');
-        Object.assign(img, { src: iconUrl(it.icon), alt: '', width: 32, height: 32, loading: 'lazy', className: `ic r-${it.rarity}` });
+        Object.assign(img, { src: iconUrl(it.icon), alt: '', width: 28, height: 28, loading: 'lazy', className: `ic r-${it.rarity}` });
         ph.replaceWith(img);
       }
     }
@@ -142,19 +136,21 @@ pager.addEventListener('click', (e) => {
   table.scrollIntoView({ block: 'start' });
 });
 form.addEventListener('submit', (e) => { e.preventDefault(); page = 0; run(); });
-form.addEventListener('input', debounce(() => { page = 0; run(); }, 200));
+form.addEventListener('input', debounce(() => { page = 0; run(); }, 180));
 form.addEventListener('reset', () => setTimeout(() => { page = 0; run(); }, 0));
 
 readParams();
 Promise.all([
-  loadIndex(),
-  fetch(`${dataBase}/prices.tsv`).then((r) => r.text()),
+  fetch(`${dataBase}/tp-${lang}.tsv`).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); }),
   fetch(`${dataBase}/meta.json`).then((r) => r.json()).catch(() => null),
-]).then(([, tsv, meta]) => {
-  for (const line of tsv.split('\n')) {
-    const [id, buy, buyQty, sell, sellQty] = line.split('\t').map(Number);
-    if (id) all.set(id, { buy, buyQty, sell, sellQty });
-  }
+]).then(([tsv, meta]) => {
+  all = tsv.split('\n').map((line) => {
+    const c = line.split('\t');
+    const r = { id: Number(c[0]), name: c[1], other: c[2], r: Number(c[3]), ty: Number(c[4]), buy: Number(c[5]), buyQty: Number(c[6]), sell: Number(c[7]), sellQty: Number(c[8]) };
+    r.key = norm(`${r.name} ${r.other}`);
+    byId.set(r.id, r);
+    return r;
+  });
   snapshotAt = meta?.pricesAt || meta?.builtAt;
   run();
   stamp();

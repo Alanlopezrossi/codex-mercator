@@ -2,6 +2,7 @@
 import { $, lang, t } from '../lib/env.js';
 import { get, batched } from '../lib/gw2.js';
 import { esc, iconUrl } from '../../shared/format.js';
+import { tr } from '../../shared/i18n.js';
 
 const tabs = $('#ptabs');
 const body = $('#pbody');
@@ -49,7 +50,7 @@ async function select(id) {
     if (!x) return '';
     return `<li class="trait trait-${kind}"><img src="${esc(iconUrl(x.icon))}" alt="" width="40" height="40" loading="lazy"><div><p class="trait-name">${esc(x.name)} <span class="muted small">${esc(t(kind === 'minor' ? 'prof.minor' : 'prof.major'))}</span></p><p class="small">${strip(x.description)}</p></div></li>`;
   };
-  body.innerHTML = `${weapons.length ? `<p class="small"><strong>${esc(t('prof.weapons'))}:</strong> ${weapons.map(esc).join(', ')}</p>` : ''}`
+  body.innerHTML = `${weapons.length ? `<p class="small"><strong>${esc(t('prof.weapons'))}:</strong> ${weapons.map((w) => esc(tr.sub(lang, w))).join(', ')}</p>` : ''}`
     + specs.map((s) => `<section class="card spec">
       <header class="spec-head">${s.icon ? `<img src="${esc(iconUrl(s.icon))}" alt="" width="48" height="48" loading="lazy">` : ''}<div><h2>${esc(s.name)}</h2><p class="muted small">${esc(t(s.elite ? 'prof.elite' : 'prof.core'))}</p></div></header>
       <ul class="trait-list">${s.minor_traits.map((id) => trait(id, 'minor')).join('')}${s.major_traits.map((id) => trait(id, 'major')).join('')}</ul>
