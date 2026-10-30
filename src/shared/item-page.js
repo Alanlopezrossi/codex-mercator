@@ -76,7 +76,7 @@ function forgeHtml(lang, it) {
   const f = it.w?.forge;
   if (!f?.length) return '';
   const blocks = f.map((r) => `<div class="recipe card-inner"><p class="recipe-meta"><span class="tag tag-forge">${esc(t(lang, 'item.forge'))}</span>${r.q > 1 ? ` · ${esc(t(lang, 'item.makes'))} ×${r.q}` : ''}</p>
-    <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-name"${lang === 'es' ? ' lang="en"' : ''}>${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
+    <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-kind ic-kind-forge" aria-hidden="true"></span><span class="ref-name"${lang === 'es' ? ' lang="en"' : ''}>${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
   return `<section class="card" aria-labelledby="forge-h"><h2 id="forge-h">${esc(t(lang, 'item.forge'))}</h2>${blocks}${wikiCredit(lang, it)}</section>`;
 }
 
@@ -105,14 +105,14 @@ function acquisitionHtml(lang, it) {
     }).join('');
     html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-  const entries = (list) => `<ul class="ref-grid">${list.map((e) => {
+  const entries = (list, kind) => `<ul class="ref-grid">${list.map((e) => {
     const name = e.n[li] || e.n[1];
     const sub = (e.s?.[li] || '').replace(/^\((.*)\)$/, '$1').replace(/\) \(/g, ' · ');
     if (e.id && e.id !== it.id && it.refs?.[e.id]) return `<li>${refLink(lang, e.id, it.refs[e.id], 0, sub)}</li>`;
-    return `<li><span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-body"><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${sub ? `<span class="ref-sub">${esc(sub)}</span>` : ''}</span></span></li>`;
+    return `<li><span class="ref"><span class="ic ic-kind ic-kind-${kind}" aria-hidden="true"></span><span class="ref-body"><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${sub ? `<span class="ref-sub">${esc(sub)}</span>` : ''}</span></span></li>`;
   }).join('')}</ul>`;
-  if (cont.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(cont)}`;
-  if (gath.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(gath)}`;
+  if (cont.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(cont, 'chest')}`;
+  if (gath.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(gath, 'node')}`;
   return `<section class="card" aria-labelledby="acq-h"><h2 id="acq-h">${esc(t(lang, 'item.acquisition'))}</h2>${html}${wikiCredit(lang, it)}</section>`;
 }
 

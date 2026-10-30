@@ -17,7 +17,9 @@ async function batched(endpoint, ids, extra = '') {
   const out = [];
   for (let i = 0; i < uniq.length; i += 200) {
     const part = uniq.slice(i, i + 200);
-    const data = await getJson(`${endpoint}?ids=${part.join(',')}${extra}`);
+    // One retry: the API sometimes drops a request under load.
+    const url = `${endpoint}?ids=${part.join(',')}${extra}`;
+    const data = await getJson(url).catch(() => new Promise((r) => setTimeout(r, 1500)).then(() => getJson(url)));
     if (Array.isArray(data)) out.push(...data);
   }
   return out;
