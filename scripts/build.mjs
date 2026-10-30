@@ -58,8 +58,9 @@ const iconKey = (u) => String(u || '').replace('https://render.guildwars2.com/fi
 
 const enById = new Map(itemsEn.map((x) => [x.id, x]));
 const items = new Map();
-for (const es of itemsEs) {
-  const en = enById.get(es.id) || {};
+// gw2treasures.com public API data (optional, see scripts/fetch-gw2t.mjs).
+const gw2t = fs.existsSync(path.join(RAW, 'gw2t.json')) ? readRaw('gw2t.json') : { containers: {}, gone: {}, forge: {} };
+function normalize(es, en) {
   const d = es.details || {};
   const de = en.details || {};
   const x = {};
@@ -78,7 +79,7 @@ for (const es of itemsEs) {
   if (d.infusion_slots?.length) x.inf = d.infusion_slots.length;
   const nameEs = String(es.name || '').trim();
   const nameEn = String(en.name || '').trim();
-  items.set(es.id, {
+  return {
     id: es.id,
     n: [nameEs, nameEn],
     d: [clean(es.description), clean(en.description)],
@@ -92,7 +93,15 @@ for (const es of itemsEs) {
     g: es.game_types || [],
     c: es.chat_link || '',
     x,
-  });
+  };
+}
+for (const es of itemsEs) items.set(es.id, normalize(es, enById.get(es.id) || {}));
+// Items removed from the game: gw2treasures keeps their last known data.
+for (const [k, g] of Object.entries(gw2t.gone || {})) {
+  const id = Number(k);
+  const es = g.es || g.en; const en = g.en || g.es;
+  if (items.has(id) || !es?.name || !es.type) continue;
+  items.set(id, { ...normalize({ ...es, id }, en), gone: 1 });
 }
 // Items that are no longer in the official API (removed from the game), kept from the previous project.
 const extraItems = fs.existsSync(path.join(ROOT, 'data/items-extra.json')) ? readData('items-extra.json').items : {};
@@ -191,6 +200,12 @@ for (const [id, refs] of Object.entries(names.achRefs || {})) {
 
 // Container contents (what each bag/chest gives) and, inverted, which containers give each item.
 const containers = fs.existsSync(path.join(ROOT, 'data/containers.json')) ? readData('containers.json').containers : {};
+const curName = new Map(names.currencies.map((c) => [c.id, [c.es, c.en]]));
+for (const [k, c] of Object.entries(gw2t.containers || {})) {
+  // Fresher and more complete than the previous project's copy; currencies get their names in both languages.
+  const cur = (c.c || []).filter(([id]) => curName.has(id)).map(([id, min, max]) => [id, min === max ? min : `${min}–${max}`, ...curName.get(id)]);
+  containers[k] = { i: c.i, c: cur.length || !containers[k] ? cur : containers[k].c };
+}
 for (const [k, c] of Object.entries(containers)) {
   const box = items.get(Number(k));
   if (!box) continue;
@@ -202,6 +217,18 @@ for (const [k, c] of Object.entries(containers)) {
   }
 }
 for (const it of items.values()) if (it.ci) it.ci = it.ci.slice(0, 40);
+
+// Mystic Forge recipes the wiki data lacks (gw2treasures).
+for (const [k, recs] of Object.entries(gw2t.forge || {})) {
+  const it = items.get(Number(k));
+  if (!it || it.w?.forge) continue;
+  it.mf = recs.map((r) => ({ q: r.q, qx: r.qx > r.q ? r.qx : 0, i: r.i.filter(([id]) => items.has(id)) })).filter((r) => r.i.length);
+  if (!it.mf.length) { delete it.mf; continue; }
+  for (const r of it.mf) for (const [id] of r.i) {
+    const ing = items.get(id);
+    if (ing && !(ing.u || []).includes(it.id) && (ing.u ||= []).length < 48) { ing.u.push(it.id); ing.uc = (ing.uc || 0) + 1; }
+  }
+}
 
 // Hand-written guides (Spanish) from the previous project: attached to every item they mention.
 const guidesData = fs.existsSync(path.join(ROOT, 'data/guides.json')) ? readData('guides.json') : { guides: {}, places: {} };
@@ -225,6 +252,7 @@ for (const it of items.values()) {
   const refIds = new Set();
   for (const r of it.rc || []) for (const [id] of r.i) refIds.add(id);
   for (const f of it.w?.forge || []) for (const [id] of f.i) if (id) refIds.add(id);
+  for (const f of it.mf || []) for (const [id] of f.i) refIds.add(id);
   for (const e of [...(it.w?.cont || []), ...(it.w?.gath || [])]) if (e.id) refIds.add(e.id);
   for (const id of it.u || []) refIds.add(id);
   if (it.x.sfx) refIds.add(it.x.sfx);
@@ -291,11 +319,11 @@ for (const it of items.values()) {
   if (!GEAR_TYPES.has(it.t)) continue;
   if (hidden(it.n[0]) && hidden(it.n[1])) continue;
   let src = 0;
-  if (it.w?.forge) src |= SRC.forge;
+  if (it.w?.forge || it.mf) src |= SRC.forge;
   if (it.rc?.length) src |= SRC.craft;
   if (it.ach?.length) src |= SRC.ach;
   if (it.w?.sold?.length) src |= SRC.vendor;
-  if (it.w?.cont?.length) src |= SRC.container;
+  if (it.w?.cont?.length || it.ci?.length) src |= SRC.container;
   if (it.tp) src |= SRC.tp;
   gear.push([it.id, it.n[0], it.n[1], it.r === 'Legendary' ? 1 : 0, it.t, it.st || '', it.x.w || '', src, it.ic, it.l]);
 }

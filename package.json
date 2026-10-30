@@ -12,7 +12,7 @@
     "data:fetch": "node scripts/fetch-api.mjs",
     "data:snapshot": "node scripts/from-snapshot.mjs",
     "generate": "node scripts/build.mjs",
-    "build": "npm run data:fetch && npm run generate",
+    "build": "npm run data:fetch && node scripts/fetch-gw2t.mjs && npm run generate",
     "build:snapshot": "npm run data:snapshot && npm run generate",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

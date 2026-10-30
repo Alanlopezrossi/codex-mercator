@@ -28,8 +28,8 @@ export function itemDescription(lang, it) {
   const kind = [tr.rarity(lang, it.r), tr.type(lang, it.t).toLowerCase()].filter(Boolean).join(' ');
   const lvl = it.l ? (lang === 'es' ? ` de nivel ${it.l}` : ` level ${it.l}`) : '';
   const parts = lang === 'es'
-    ? [`${name}: ${kind}${lvl} de Guild Wars 2.`, it.tp ? 'Precio en vivo en el bazar.' : '', it.rc?.length ? 'Receta e ingredientes.' : '', it.w?.forge ? 'Receta de la Forja Mística.' : '', 'Cómo conseguirlo y para qué sirve.']
-    : [`${name}: ${kind}${lvl} in Guild Wars 2.`, it.tp ? 'Live trading post price.' : '', it.rc?.length ? 'Recipe and ingredients.' : '', it.w?.forge ? 'Mystic Forge recipe.' : '', 'How to get it and what it is used for.'];
+    ? [`${name}: ${kind}${lvl} de Guild Wars 2.`, it.tp ? 'Precio en vivo en el bazar.' : '', it.rc?.length ? 'Receta e ingredientes.' : '', it.w?.forge || it.mf ? 'Receta de la Forja Mística.' : '', 'Cómo conseguirlo y para qué sirve.']
+    : [`${name}: ${kind}${lvl} in Guild Wars 2.`, it.tp ? 'Live trading post price.' : '', it.rc?.length ? 'Recipe and ingredients.' : '', it.w?.forge || it.mf ? 'Mystic Forge recipe.' : '', 'How to get it and what it is used for.'];
   return parts.filter(Boolean).join(' ').slice(0, 300);
 }
 
@@ -74,11 +74,12 @@ function recipesHtml(lang, it) {
 }
 
 function forgeHtml(lang, it) {
-  const f = it.w?.forge;
+  const fromWiki = !!it.w?.forge?.length;
+  const f = fromWiki ? it.w.forge : it.mf;
   if (!f?.length) return '';
-  const blocks = f.map((r) => `<div class="recipe card-inner"><p class="recipe-meta"><span class="tag tag-forge">${esc(t(lang, 'item.forge'))}</span>${r.q > 1 ? ` · ${esc(t(lang, 'item.makes'))} ×${r.q}` : ''}</p>
+  const blocks = f.map((r) => `<div class="recipe card-inner"><p class="recipe-meta"><span class="tag tag-forge">${esc(t(lang, 'item.forge'))}</span>${r.q > 1 || r.qx ? ` · ${esc(t(lang, 'item.makes'))} ×${r.q}${r.qx ? `–${r.qx}` : ''}` : ''}</p>
     <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-kind ic-kind-forge" aria-hidden="true"></span><span class="ref-name"${lang === 'es' ? ' lang="en"' : ''}>${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
-  return `<section class="card" aria-labelledby="forge-h"><h2 id="forge-h">${esc(t(lang, 'item.forge'))}</h2>${blocks}${wikiCredit(lang, it)}</section>`;
+  return `<section class="card" aria-labelledby="forge-h"><h2 id="forge-h">${esc(t(lang, 'item.forge'))}</h2>${blocks}${fromWiki ? wikiCredit(lang, it) : ''}</section>`;
 }
 
 function wikiCredit(lang, it) {
@@ -101,7 +102,7 @@ function contentsHtml(lang, it) {
     if (!groups[k].length) continue;
     html += `<h3 class="h-sub">${esc(head[k])} <span class="count">${groups[k].length}</span></h3><ul class="ref-grid">${groups[k].map(([id, qty]) => `<li>${refLink(lang, id, it.refs?.[id], qty > 1 ? qty : 0)}</li>`).join('')}</ul>`;
   }
-  if (it.ctc?.length) html += `<h3 class="h-sub">${lang === 'es' ? 'Divisas' : 'Currencies'}</h3><ul class="plain-list">${it.ctc.map(([, qty, name]) => `<li>${num(qty, lang)} ${esc(name)}</li>`).join('')}</ul>`;
+  if (it.ctc?.length) html += `<h3 class="h-sub">${lang === 'es' ? 'Divisas' : 'Currencies'}</h3><ul class="plain-list">${it.ctc.map(([, qty, nEs, nEn]) => `<li>${typeof qty === 'number' ? num(qty, lang) : esc(qty)} ${esc((lang === 'en' && nEn) || nEs)}</li>`).join('')}</ul>`;
   return `<section class="card" aria-labelledby="ct-h"><h2 id="ct-h">${lang === 'es' ? 'Contenido' : 'Contents'}</h2>${html}</section>`;
 }
 

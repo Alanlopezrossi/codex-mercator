@@ -78,6 +78,7 @@ Step by step in **[docs/DEPLOY.md](docs/DEPLOY.md)** (Cloudflare connected to Gi
 - Content from the Guild Wars 2 Wiki (Mystic Forge, vendors, timers) under **GNU FDL 1.2**, with attribution and a link to the original page. See `data/README.md`.
 - Icons and tiles are loaded from ArenaNet's servers without modification. No wiki images are used.
 - Container contents, removed items, extra achievements and the hand-written guides come from the previous Bazar GW2 project (`data/containers.json`, `data/items-extra.json`, `data/achievements-extra.json`, `data/guides.json`).
+- Optional: with the build variable `GW2T_API_KEY` set, `scripts/fetch-gw2t.mjs` adds up-to-date container contents, removed items and Mystic Forge recipes from the public gw2treasures.com API (credited on the legal page). Without it the build uses `data/` only.
 - Code under the MIT license (it does not cover game content).
 
 ## Roadmap
