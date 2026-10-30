@@ -17,7 +17,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "node --test tests/unit/*.test.mjs",
-    "test:e2e": "node tests/e2e/smoke.mjs"
+    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/layout.mjs"
   },
   "devDependencies": {
     "axe-core": "4.10.3",

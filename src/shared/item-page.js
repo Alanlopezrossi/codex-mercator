@@ -5,11 +5,12 @@ import { ICONS } from './layout.js';
 
 const L = (lang) => LANGS.indexOf(lang);
 
-function refLink(lang, id, ref, count) {
+// Item link: icon, then a text column (name and an optional second line), then the quantity.
+function refLink(lang, id, ref, count, sub = '') {
   const li = L(lang);
   const name = ref ? ref[li] || ref[1 - li] : `#${id}`;
   const img = ref?.[3] ? `<img src="${esc(iconUrl(ref[3]))}" alt="" width="32" height="32" loading="lazy" class="ic r-${esc(ref[2])}">` : '<span class="ic ic-ph" aria-hidden="true"></span>';
-  return `<a class="ref" href="${itemPath(lang, id, name)}">${img}<span class="ref-name r-txt-${esc(ref?.[2] || 'Basic')}">${esc(name)}</span>${count ? `<span class="ref-count">×${num(count, lang)}</span>` : ''}</a>`;
+  return `<a class="ref" href="${itemPath(lang, id, name)}">${img}<span class="ref-body"><span class="ref-name r-txt-${esc(ref?.[2] || 'Basic')}">${esc(name)}</span>${sub ? `<span class="ref-sub">${esc(sub)}</span>` : ''}</span>${count ? `<span class="ref-count">×${num(count, lang)}</span>` : ''}</a>`;
 }
 
 function textBlock(s) {
@@ -101,11 +102,11 @@ function acquisitionHtml(lang, it) {
     }).join('');
     html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-  const entries = (list) => `<ul class="ref-grid">${list.map((e) => {
+  const entries = (list) => `<ul class="ref-grid">${list.filter((e) => e.id !== it.id).map((e) => {
     const name = e.n[li] || e.n[1];
-    const suffix = e.s?.[li] ? ` <span class="small muted">${esc(e.s[li])}</span>` : '';
-    if (e.id && e.id !== it.id) return `<li>${refLink(lang, e.id, it.refs?.[e.id]).replace('</a>', `${suffix}</a>`)}</li>`;
-    return `<li><span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${suffix}</span></li>`;
+    const sub = (e.s?.[li] || '').replace(/^\((.*)\)$/, '$1').replace(/\) \(/g, ' · ');
+    if (e.id && e.id !== it.id && it.refs?.[e.id]) return `<li>${refLink(lang, e.id, it.refs[e.id], 0, sub)}</li>`;
+    return `<li><span class="ref"><span class="ic ic-ph" aria-hidden="true"></span><span class="ref-body"><span class="ref-name"${isEs && !e.ok ? ' lang="en"' : ''}>${esc(name)}</span>${sub ? `<span class="ref-sub">${esc(sub)}</span>` : ''}</span></span></li>`;
   }).join('')}</ul>`;
   if (w.cont?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(w.cont)}`;
   if (w.gath?.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(w.gath)}`;
