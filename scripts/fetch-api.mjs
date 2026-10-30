@@ -36,6 +36,15 @@ for (const a of achEn) {
 }
 write('names.json', { currencies: pair(curEs, curEn), maps: pair(mapsEs, mapsEn), achievements: pair(achEs, achEn), achRefs });
 
+// Achievement groups and categories (small) are shipped with the site so the page never waits on the API for them.
+for (const lang of ['es', 'en']) {
+  const [groups, categories] = await Promise.all([
+    get(`/v2/achievements/groups?ids=all&lang=${lang}`).then((r) => r.data),
+    get(`/v2/achievements/categories?ids=all&lang=${lang}`).then((r) => r.data),
+  ]);
+  write(`ach-tree-${lang}.json`, { groups, categories });
+}
+
 write('items-es.json', itemsEs);
 write('items-en.json', itemsEn);
 write('recipes.json', recipes);

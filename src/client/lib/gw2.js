@@ -2,7 +2,7 @@
 const API = 'https://api.guildwars2.com';
 const itemCache = new Map();
 
-async function getJson(path, { timeout = 15000 } = {}) {
+async function getJson(path, { timeout = 25000 } = {}) {
   const res = await fetch(API + path, { signal: AbortSignal.timeout(timeout), credentials: 'omit' });
   if (!res.ok && res.status !== 206) {
     // 404 with every ID invalid: return an empty list.

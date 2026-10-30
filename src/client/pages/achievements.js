@@ -13,14 +13,25 @@ let categories = new Map();
 const strip = (s) => String(s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
 const text = (s) => esc(strip(s)).replace(/\n/g, '<br>');
 
+// Groups and categories come with the site data (fast, no API call); if missing, from the live API.
+async function loadTree() {
+  try {
+    const r = await fetch(`${document.body.dataset.data}/ach-${lang}.json`);
+    if (r.ok) return r.json();
+  } catch { /* fall back to the API */ }
+  const [g, c] = await Promise.all([get('/v2/achievements/groups?ids=all', lang), get('/v2/achievements/categories?ids=all', lang)]);
+  return { groups: g, categories: c };
+}
+
 async function init() {
   try {
-    [groups, categories] = await Promise.all([
-      get('/v2/achievements/groups?ids=all', lang),
-      get('/v2/achievements/categories?ids=all', lang).then((a) => new Map(a.map((c) => [c.id, c]))),
-    ]);
+    const d = await loadTree();
+    groups = d.groups;
+    categories = new Map(d.categories.map((c) => [c.id, c]));
   } catch {
-    cats.innerHTML = `<p class="notice">${esc(t('error'))}</p>`;
+    cats.innerHTML = `<p class="notice">${esc(t('error'))} <button type="button" class="btn btn-small" id="aretry">${esc(t('retry'))}</button></p>`;
+    $('#aretry')?.addEventListener('click', () => { cats.innerHTML = `<p class="muted">${esc(t('loading'))}</p>`; init(); });
+    list.innerHTML = '';
     return;
   }
   groups.sort((a, b) => a.order - b.order);
@@ -55,8 +66,11 @@ async function open(catId) {
   try {
     achs = await batched('/v2/achievements', c.achievements, `&lang=${lang}`);
   } catch {
-    list.innerHTML = `<p class="notice">${esc(t('error'))}</p>`;
-    return;
+    try { achs = await batched('/v2/achievements', c.achievements, `&lang=${lang}`); } catch {
+      list.innerHTML = `<p class="notice">${esc(t('error'))} <button type="button" class="btn btn-small" id="aretry2">${esc(t('retry'))}</button></p>`;
+      $('#aretry2')?.addEventListener('click', () => open(catId));
+      return;
+    }
   }
   const order = new Map(c.achievements.map((id, i) => [id, i]));
   achs.sort((a, b) => order.get(a.id) - order.get(b.id));

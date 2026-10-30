@@ -315,6 +315,14 @@ const events = Object.entries(timers.events).map(([key, ev]) => ({
   q: ev.q,
 }));
 if (missingEv.size) console.warn(`[build] events without a Spanish name (shown in English): ${[...missingEv].join(', ')}`);
+for (const lang of LANGS) {
+  const f = path.join(RAW, `ach-tree-${lang}.json`);
+  if (fs.existsSync(f)) {
+    const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    const keep = (c) => ({ id: c.id, name: c.name, description: c.description, order: c.order, icon: c.icon, achievements: c.achievements });
+    fs.writeFileSync(path.join(DATA, `ach-${lang}.json`), JSON.stringify({ groups: d.groups.map((g) => ({ id: g.id, name: g.name, order: g.order, categories: g.categories })), categories: d.categories.map(keep) }));
+  }
+}
 fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, v: timers.v, events }));
 
 // ---------- 8. Metadata ----------
