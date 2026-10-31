@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import * as esbuild from 'esbuild';
-import { LANGS, RARITIES, TYPE_KEYS, slugify } from '../src/shared/i18n.js';
+import { LANGS, RARITIES, TYPE_KEYS, slugify, pagePath, t as tt } from '../src/shared/i18n.js';
 import { SHARD_SIZE, shardOf } from '../src/shared/data.js';
 import { renderStaticPages } from './pages.mjs';
 import { securityHeaders } from '../src/shared/security.js';
@@ -399,6 +399,7 @@ const geo = compactFloor();
 fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
 
 // ---------- 6b. Vendors (NPCs): who sells what and where, from the wiki "sold by" tables ----------
+let vendorIndex = [];
 {
   // Place name (English) -> coordinates on the continent map: points of interest, sectors and maps.
   const coordOf = new Map();
@@ -450,6 +451,7 @@ fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
   for (const v of list) for (const c of v.cur) curCount.set(c, (curCount.get(c) || 0) + 1);
   const topCur = [...curCount.entries()].filter(([id]) => curNames[id]).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([id]) => [id, ...curNames[id]]);
   fs.writeFileSync(path.join(DATA, 'vendors.json'), JSON.stringify({ vendors: list, items: vItems, cur: topCur }));
+  vendorIndex = list.map((v) => [v.k, v.n, v.loc[0]?.z || v.loc[0]?.a || null]);
   console.log(`[build] vendors: ${list.length} NPCs, ${list.reduce((s2, v) => s2 + v.it.length, 0)} offers, ${list.filter((v) => v.loc.some((l) => l.c)).length} with a map location`);
 }
 
@@ -541,6 +543,8 @@ function walk(dir) {
 
 // ---------- 10. Static files, pages, SEO ----------
 fs.cpSync('static', DIST, { recursive: true });
+// Service worker at the site root (installable app, offline copies of visited pages).
+await esbuild.build({ entryPoints: ['src/client/sw.js'], bundle: true, minify: true, format: 'iife', target: ['es2020'], outfile: path.join(DIST, 'sw.js'), define: { __VERSION__: JSON.stringify(assetVersion) }, logLevel: 'warning' });
 const mon = monetizationFromEnv(process.env);
 const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile, mon };
 console.log(`[build] monetization: ads ${mon.adClient ? (mon.adSlot ? 'on (with ad boxes)' : 'on (script only)') : 'off'}, donate ${mon.donate ? 'on' : 'off'}, affiliate ${mon.affiliate ? 'on' : 'off'}, analytics ${mon.cfBeacon ? 'on' : 'off'}`);
@@ -562,7 +566,53 @@ const dungeonData = (() => {
   return { dungeons: d.dungeons.map(fix), other: d.other.map(fix) };
 })();
 fs.writeFileSync(path.join(DATA, 'dungeons.json'), JSON.stringify(dungeonData));
-const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
+// Fractals and strike missions: map names in both languages from the official API.
+const instancesData = (() => {
+  const d = readData('instances.json');
+  const mapN = new Map([...names.maps.map((m) => [m.en, [m.es, m.en]]), ...geo.maps.map((m) => [m.n[1], m.n])]);
+  const hubOf = (en) => {
+    const n = mapN.get(en) || [en, en];
+    const w = geo.wps.find((x) => geo.maps.find((m) => m.id === x.m)?.n[1] === en);
+    return { n, chat: w?.chat || '', wpN: w?.n || null, pos: w?.c || null };
+  };
+  const curN = new Map(names.currencies.map((c) => [c.en, [c.es, c.en]]));
+  return {
+    strikes: d.strikes.map((g) => ({ x: g.x, hub: hubOf(g.hub), list: g.list.map((en) => mapN.get(en) || [en, en]) })),
+    fractals: { ...d.fractals, hub: hubOf(d.fractals.hub), currencies: d.fractals.currencies.map((en) => curN.get(en) || [en, en]) },
+  };
+})();
+
+// "Go to" index for the header search: site sections, vendors, dungeons, maps and achievements (besides items).
+{
+  const go = []; // [kind, nameEs, nameEn, pathEs, pathEn, subEs, subEn]
+  const P = (k) => [pagePath('es', k), pagePath('en', k)];
+  for (const k of ['events', 'bazaar', 'items', 'gear', 'vendors', 'dungeons', 'instances', 'achievements', 'professions', 'map', 'calculator', 'compare']) go.push(['page', tt('es', `nav.${k}`), tt('en', `nav.${k}`), ...P(k), '', '']);
+  for (const [k, n, sub] of vendorIndex) go.push(['npc', n[0], n[1], `${pagePath('es', 'vendors')}#v=${k}`, `${pagePath('en', 'vendors')}#v=${k}`, sub?.[0] || '', sub?.[1] || '']);
+  for (const x of [...dungeonData.dungeons, ...dungeonData.other]) go.push(['dg', x.n[0], x.n[1], `${pagePath('es', 'dungeons')}#${x.id}`, `${pagePath('en', 'dungeons')}#${x.id}`, x.mapN[0], x.mapN[1]]);
+  const seenMap = new Set();
+  for (const m of geo.maps) {
+    if (!m.rect || seenMap.has(m.n[1])) continue;
+    seenMap.add(m.n[1]);
+    const c = `${Math.round((m.rect[0][0] + m.rect[1][0]) / 2)},${Math.round((m.rect[0][1] + m.rect[1][1]) / 2)}`;
+    go.push(['map', m.n[0], m.n[1], `${pagePath('es', 'map')}#@${c},${encodeURIComponent(m.n[0])}`, `${pagePath('en', 'map')}#@${c},${encodeURIComponent(m.n[1])}`, m.reg?.[0] || '', m.reg?.[1] || '']);
+  }
+  const treeEs = fs.existsSync(path.join(RAW, 'ach-tree-es.json')) ? JSON.parse(fs.readFileSync(path.join(RAW, 'ach-tree-es.json'), 'utf8')) : null;
+  const treeEn = fs.existsSync(path.join(RAW, 'ach-tree-en.json')) ? JSON.parse(fs.readFileSync(path.join(RAW, 'ach-tree-en.json'), 'utf8')) : null;
+  if (treeEs && treeEn) {
+    const catOf = new Map();
+    const catName = new Map(treeEs.categories.map((c) => [c.id, [c.name, treeEn.categories.find((x) => x.id === c.id)?.name || c.name]]));
+    for (const c of treeEn.categories) for (const a of c.achievements || []) if (!catOf.has(a)) catOf.set(a, c.id);
+    for (const a of names.achievements) {
+      const cat = catOf.get(a.id);
+      if (!cat) continue;
+      const cn = catName.get(cat) || ['', ''];
+      go.push(['ach', a.es, a.en, `${pagePath('es', 'achievements')}#cat=${cat}&a=${a.id}`, `${pagePath('en', 'achievements')}#cat=${cat}&a=${a.id}`, cn[0], cn[1]]);
+    }
+  }
+  fs.writeFileSync(path.join(DATA, 'goto.json'), JSON.stringify(go));
+  console.log(`[build] header search: ${go.length} places, vendors, dungeons, maps and achievements`);
+}
+const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData, instances: instancesData })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');
   const file = p.endsWith('/') ? f : `${f}.html`;
@@ -601,6 +651,7 @@ fs.writeFileSync(path.join(DIST, '_headers'), headersFile());
 function headersFile() {
   const sec = securityHeaders(mon);
   const lines = ['/*', ...Object.entries(sec).map(([k, v]) => `  ${k}: ${v}`)];
+  lines.push('/sw.js', '  Cache-Control: no-cache');
   lines.push('/assets/*', '  Cache-Control: public, max-age=31536000, immutable');
   lines.push('/data/*', '  Cache-Control: public, max-age=31536000, immutable', '  X-Robots-Tag: noindex');
   lines.push('/*.html', '  Cache-Control: public, max-age=0, s-maxage=600, must-revalidate');

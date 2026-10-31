@@ -1,14 +1,77 @@
 {
   "name": "Bazaar Ledger",
   "short_name": "Ledger",
-  "description": "Unofficial Guild Wars 2 item database and live trading post.",
+  "description": "Unofficial Guild Wars 2 fansite: events and alarms, live trading post, items, vendors and dungeons, in English and Spanish.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1116",
   "theme_color": "#14161c",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "id": "/",
+  "lang": "en",
+  "scope": "/",
+  "categories": [
+    "games",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Events",
+      "url": "/en/",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Trading post",
+      "url": "/en/trading-post",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Eventos (ES)",
+      "url": "/es/",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Bazar (ES)",
+      "url": "/es/bazar",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

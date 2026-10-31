@@ -44,8 +44,20 @@ async function init() {
   const ordered = [...groups.filter((g) => g.id === GENERAL), ...groups.filter((g) => g.id !== GENERAL)];
   const first = ordered.flatMap((g) => g.categories.map((id) => categories.get(id)).filter(Boolean).sort((a, b) => a.order - b.order))[0];
   const pick = [m && Number(m[1]), last, first?.id].find((id) => id && categories.has(id));
-  if (pick) open(pick);
+  if (pick) open(pick).then(focusAch);
 }
+// Links from the header search: #cat=ID&a=ID opens the category and shows that achievement.
+function focusAch() {
+  const a = location.hash.match(/[#&]a=(\d+)/);
+  const card = a && document.getElementById(`a${a[1]}`);
+  if (!card) return;
+  card.classList.add('is-target');
+  card.scrollIntoView({ block: 'center' });
+}
+window.addEventListener('hashchange', () => {
+  const m = location.hash.match(/cat=(\d+)/);
+  if (m && categories.has(Number(m[1]))) open(Number(m[1])).then(focusAch);
+});
 
 function renderTree(q = '') {
   const nq = q.trim().toLowerCase();

@@ -241,6 +241,7 @@ export function renderItemBody(lang, it, mon = {}) {
     </div>
     <div class="item-actions">
       ${it.c ? `<button type="button" class="btn btn-small copy-btn" data-copy="${esc(it.c)}" aria-label="${esc(t(lang, 'copy'))} ${esc(t(lang, 'item.chat'))} ${esc(it.c)}"><code>${esc(it.c)}</code></button>` : ''}
+      <button type="button" class="btn btn-small js-only" id="cmpBtn" data-href="${pagePath(lang, 'compare')}">⇄ ${esc(t(lang, 'cmp.btn'))}</button>
       <button type="button" class="btn btn-small fav-btn js-only" id="favBtn" aria-pressed="false" data-on="${esc(t(lang, 'item.unfavorite'))}" data-off="${esc(t(lang, 'item.favorite'))}">${ICONS.star}<span>${esc(t(lang, 'item.favorite'))}</span></button>
     </div>
   </header>

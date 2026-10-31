@@ -66,6 +66,29 @@ ${noscript(lang)}
 <nav class="pager" id="gpager" aria-label="${esc(t(lang, 'page'))}"></nav>`;
 }
 
+// Tabs that link the two group-content pages.
+const instTabs = (lang, cur) => `<nav class="seg-tabs seg-links" aria-label="${esc(t(lang, 'fr.tabs'))}">${['dungeons', 'instances'].map((k) => `<a href="${pagePath(lang, k)}"${k === cur ? ' aria-current="page"' : ''}>${esc(t(lang, k === 'dungeons' ? 'nav.dungeons' : 'nav.instances'))}</a>`).join('')}</nav>`;
+
+function instances(lang, data) {
+  const li = LANGS.indexOf(lang);
+  const L = (p) => (p ? p[li] || p[1] : '');
+  const hubHtml = (h) => `<p class="small">${esc(t(lang, 'fr.hub'))}: <strong>${esc(L(h.n))}</strong>${h.chat ? ` <button type="button" class="btn btn-small copy-btn" data-copy="${esc(h.chat)}" aria-label="${esc(t(lang, 'copy'))} ${esc(h.chat)}"><code>${esc(h.chat)}</code></button>` : ''}${h.pos ? ` <a class="btn btn-small" href="${pagePath(lang, 'map')}#@${h.pos[0]},${h.pos[1]},${encodeURIComponent(L(h.n))}${h.chat ? `,${encodeURIComponent(h.chat)}` : ''}">📍 ${esc(t(lang, 'dg.onMap'))}</a>` : ''}</p>`;
+  const f = data.fractals;
+  return `${head(lang, 'fr')}
+${instTabs(lang, 'instances')}
+<section class="card" aria-labelledby="frd-h">
+  <div class="section-head"><h2 id="frd-h">${esc(t(lang, 'fr.daily'))}</h2><p class="small muted"><span id="frReset"></span></p></div>
+  <p class="small muted">${esc(t(lang, 'fr.dailyHelp'))}</p>
+  ${noscript(lang)}
+  <div id="frDaily" class="fr-daily" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></div>
+</section>
+${f ? `<section class="card" aria-labelledby="fra-h"><h2 id="fra-h">${esc(t(lang, 'fr.about'))}</h2><p>${esc(L(f.d))}</p>${hubHtml(f.hub)}<p class="small"><strong>${esc(t(lang, 'fr.currency'))}:</strong> ${f.currencies.map((c) => esc(L(c))).join(' · ')}</p></section>` : ''}
+<h2 class="section-title">${esc(t(lang, 'fr.strikes'))}</h2>
+<p class="muted small">${esc(t(lang, 'fr.strikesHelp'))}</p>
+<div class="dg-grid">${data.strikes.map((g) => `<article class="card dg"><h3>${esc(L(g.x))}</h3>${hubHtml(g.hub)}<ol class="dg-paths">${g.list.map((n) => `<li>${esc(L(n))}${lang === 'es' && n[0] !== n[1] ? ` <span class="small muted" lang="en">(${esc(n[1])})</span>` : ''}</li>`).join('')}</ol></article>`).join('')}</div>
+<p class="muted small">${lang === 'es' ? 'Fractales del día, nombres de mapas y puntos de ruta: API oficial de Guild Wars 2.' : "Today's fractals, map names and waypoints: official Guild Wars 2 API."}</p>`;
+}
+
 function dungeons(lang, data) {
   const li = LANGS.indexOf(lang);
   const L = (p) => (p ? p[li] || p[1] : '');
@@ -88,10 +111,22 @@ function dungeons(lang, data) {
   </article>`).join('');
   const other = data.other.map((x) => `<article class="card dg dg-other" id="${esc(x.id)}"><h3>${esc(L(x.n))}</h3><p>${esc(L(x.d))}</p>${where(x)}</article>`).join('');
   return `${head(lang, 'dg')}
+${instTabs(lang, 'dungeons')}
 <div class="dg-grid">${cards}</div>
 <p class="notice small">${esc(t(lang, 'dg.reward'))} <a href="${pagePath(lang, 'vendors')}?q=${encodeURIComponent(lang === 'es' ? 'mazmorra' : 'dungeon')}">${esc(t(lang, 'dg.vendors'))} →</a></p>
 <section aria-labelledby="dg-other-h"><h2 id="dg-other-h" class="section-title">${esc(t(lang, 'dg.other'))}</h2><div class="dg-grid dg-grid-3">${other}</div></section>
 <p class="muted small">${lang === 'es' ? 'Ubicaciones y puntos de ruta: API oficial de Guild Wars 2.' : 'Locations and waypoints: official Guild Wars 2 API.'}</p>`;
+}
+
+function compare(lang) {
+  return `${head(lang, 'cmp')}
+${noscript(lang)}
+<form class="filters card cmp-add" id="cmpForm" role="search" action="" method="get">
+  <div class="field grow ac-field"><label for="cq">${esc(t(lang, 'cmp.add'))}</label><input id="cq" type="search" placeholder="${esc(t(lang, 'cmp.addPh'))}" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="cq-list" aria-expanded="false"><ul id="cq-list" class="ac-list" role="listbox" hidden></ul></div>
+  <div class="field actions"><button class="btn" type="button" id="cmpShare">${esc(t(lang, 'cmp.share'))}</button><button class="btn" type="button" id="cmpClear">${esc(t(lang, 'cmp.clear'))}</button></div>
+</form>
+<p class="small muted" id="cmpNote" aria-live="polite"></p>
+<div class="table-wrap cmp-wrap card" tabindex="0" role="region" aria-label="${esc(t(lang, 'cmp.title'))}"><div id="cmpTable"></div></div>`;
 }
 
 function vendors(lang) {
@@ -152,7 +187,16 @@ function professions(lang) {
   return `${head(lang, 'prof')}
 ${noscript(lang)}
 <div class="prof-tabs" id="ptabs" role="tablist" aria-label="${esc(t(lang, 'prof.title'))}"></div>
-<section id="pbody" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></section>`;
+<section id="pbody" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></section>
+<section class="card builds" aria-labelledby="builds-h">
+  <h2 id="builds-h">${lang === 'es' ? 'Builds recomendadas' : 'Recommended builds'}</h2>
+  <p class="small muted">${lang === 'es' ? 'Las builds cambian con cada actualización de equilibrio. Estos sitios de la comunidad las mantienen al día (en inglés):' : 'Builds change with every balance update. These community sites keep them up to date:'}</p>
+  <ul class="builds-list">
+    <li><a href="https://snowcrows.com/builds" rel="noopener" target="_blank"><strong>Snow Crows</strong></a><span class="small muted">${lang === 'es' ? 'Incursiones, misiones de ataque y fractales (rendimiento máximo).' : 'Raids, strike missions and fractals (top performance).'}</span></li>
+    <li><a href="https://metabattle.com/wiki/MetaBattle_Wiki" rel="noopener" target="_blank"><strong>MetaBattle</strong></a><span class="small muted">${lang === 'es' ? 'Builds para todo: mundo abierto, JcJ, McM, fractales e incursiones.' : 'Builds for everything: open world, PvP, WvW, fractals and raids.'}</span></li>
+    <li><a href="https://hardstuck.gg/gw2/builds/" rel="noopener" target="_blank"><strong>Hardstuck</strong></a><span class="small muted">${lang === 'es' ? 'Builds explicadas paso a paso, buenas para empezar.' : 'Builds explained step by step, good for beginners.'}</span></li>
+  </ul>
+</section>`;
 }
 
 function events(lang) {
@@ -366,7 +410,7 @@ function notFound(lang) {
   return `<section class="empty-state"><h1>${esc(t(lang, 'notfound.title'))}</h1><p class="lead">${esc(t(lang, 'notfound.lead'))}</p><p><a class="btn btn-primary" href="${pagePath(lang, 'home')}">${esc(t(lang, 'notfound.back'))}</a></p></section>`;
 }
 
-export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] } } = {}) {
+export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] }, instances: frData = { strikes: [], fractals: null } } = {}) {
   const out = {};
   for (const lang of LANGS) {
     const base = { lang, meta };
@@ -382,6 +426,8 @@ export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dun
     P('achievements', achievements(lang), { title: t(lang, 'ach.title'), description: t(lang, 'ach.lead'), scripts: ['achievements'] });
     P('professions', professions(lang), { title: t(lang, 'prof.title'), description: t(lang, 'prof.lead'), scripts: ['professions'] });
     P('gear', gear(lang), { title: t(lang, 'gear.title'), description: t(lang, 'gear.lead'), scripts: ['gear'] });
+    P('compare', compare(lang), { title: t(lang, 'cmp.title'), description: t(lang, 'cmp.lead'), scripts: ['compare'] });
+    P('instances', instances(lang, frData), { title: t(lang, 'fr.title'), description: t(lang, 'fr.lead'), scripts: ['instances'] });
     P('dungeons', dungeons(lang, dgData), { title: t(lang, 'dg.title'), description: t(lang, 'dg.lead') });
     P('vendors', vendors(lang), { title: t(lang, 'vendors.title'), description: t(lang, 'vendors.lead'), scripts: ['vendors'] });
     P('map', map(lang), { title: t(lang, 'map.title'), description: t(lang, 'map.lead'), scripts: ['map'], styles: ['map'], ads: false });

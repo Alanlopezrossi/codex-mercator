@@ -13,7 +13,7 @@ export function buildCsp(mon = {}) {
     "font-src 'self'",
     j("connect-src 'self' https://api.guildwars2.com", x.connect),
     "manifest-src 'self'",
-    "worker-src 'none'",
+    "worker-src 'self'",
     "object-src 'none'",
     x.frame.length ? j('frame-src', x.frame) : "frame-src 'none'",
     "frame-ancestors 'none'",

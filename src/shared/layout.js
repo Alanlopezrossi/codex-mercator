@@ -90,7 +90,14 @@ ${ld}
       <ul id="hq-list" class="ac-list" role="listbox" hidden></ul>
     </form>
     <div class="header-tools">
-      <a class="lang-link" href="${esc(o.alternates[other])}" hreflang="${other}" lang="${other}">${esc(t(lang, 'otherLang'))}</a>
+      <a class="lang-link" href="${esc(o.alternates[other])}" hreflang="${other}" lang="${other}" aria-label="${esc(t(lang, 'otherLang'))}"><span class="lang-long">${esc(t(lang, 'otherLang'))}</span><span class="lang-short">${other.toUpperCase()}</span></a>
+      <details class="a11y-menu js-only">
+        <summary class="icon-btn" aria-label="${esc(t(lang, 'a11y.title'))}" title="${esc(t(lang, 'a11y.title'))}"><span aria-hidden="true" class="a11y-aa">Aa</span></summary>
+        <div class="a11y-pop" role="group" aria-label="${esc(t(lang, 'a11y.title'))}">
+          <fieldset class="chips"><legend>${esc(t(lang, 'a11y.size'))}</legend><div class="chip-row">${[['1', t(lang, 'a11y.normal')], ['2', t(lang, 'a11y.large')], ['3', t(lang, 'a11y.xlarge')]].map(([v, l]) => `<input type="radio" class="chip-input" name="a11yfs" id="a11yfs-${v}" value="${v}"${v === '1' ? ' checked' : ''}><label class="chip" for="a11yfs-${v}">${esc(l)}</label>`).join('')}</div></fieldset>
+          <div class="field check"><input type="checkbox" id="a11yhc"><label for="a11yhc">${esc(t(lang, 'a11y.contrast'))}</label></div>
+        </div>
+      </details>
       <button type="button" class="icon-btn js-only" id="themeBtn" aria-label="${esc(t(lang, 'theme'))}" title="${esc(t(lang, 'theme'))}">${ICONS.theme}</button>
     </div>
   </div>

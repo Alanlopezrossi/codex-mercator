@@ -25,6 +25,21 @@ if (fb && id) {
   });
 }
 
+// Compare: adds this item to the comparison list (up to 4, saved in this browser).
+const cb = $('#cmpBtn');
+if (cb && id) {
+  cb.addEventListener('click', () => {
+    let ids = [];
+    try { ids = JSON.parse(localStorage.getItem('cm-compare') || '[]'); } catch { /* blocked */ }
+    if (!ids.includes(id)) {
+      if (ids.length >= 4) ids.shift();
+      ids.push(id);
+      try { localStorage.setItem('cm-compare', JSON.stringify(ids)); } catch { /* blocked */ }
+    }
+    location.href = `${cb.dataset.href}?ids=${ids.join(',')}`;
+  });
+}
+
 // Live price and recipe cost
 const box = $('#price');
 const ingIds = [...new Set($$('[data-ing]').map((el) => Number(el.dataset.ing)))];

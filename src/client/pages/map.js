@@ -127,12 +127,15 @@ async function init() {
   renderList();
 
   // Links from Events: /map#@x,y,label,waypoint
-  const m = location.hash.match(/^#@(-?\d+),(-?\d+)(?:,([^,]*))?(?:,([^,]*))?/);
-  if (m) {
+  const fromHash = () => {
+    const m = location.hash.match(/^#@(-?\d+),(-?\d+)(?:,([^,]*))?(?:,([^,]*))?/);
+    if (!m) return;
     const dec = (v) => { try { return decodeURIComponent(v || ''); } catch { return ''; } };
     showPoint([Number(m[1]), Number(m[2])], dec(m[3]), dec(m[4]));
     el.scrollIntoView({ block: 'start' });
-  }
+  };
+  fromHash();
+  window.addEventListener('hashchange', fromHash);
   window.addEventListener('resize', debounce(() => map.invalidateSize(), 200));
 }
 if (el) init();

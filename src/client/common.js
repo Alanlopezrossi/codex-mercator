@@ -36,15 +36,40 @@ document.addEventListener('click', async (e) => {
   toast(`${t('copied')}: ${text}`);
 });
 
+// Accessibility menu: text size and high contrast, saved in this browser.
+const a11y = $('.a11y-menu');
+if (a11y) {
+  const root = document.documentElement;
+  const read = () => { try { return JSON.parse(localStorage.getItem('cm-a11y') || '{}'); } catch { return {}; } };
+  const cur = read();
+  const fsIn = a11y.querySelector(`input[name="a11yfs"][value="${cur.fs === '2' || cur.fs === '3' ? cur.fs : '1'}"]`);
+  if (fsIn) fsIn.checked = true;
+  a11y.querySelector('#a11yhc').checked = !!cur.hc;
+  a11y.addEventListener('change', () => {
+    const fs = a11y.querySelector('input[name="a11yfs"]:checked')?.value || '1';
+    const hc = a11y.querySelector('#a11yhc').checked;
+    if (fs === '1') root.removeAttribute('data-fs'); else root.setAttribute('data-fs', fs);
+    if (hc) root.setAttribute('data-contrast', 'high'); else root.removeAttribute('data-contrast');
+    try { localStorage.setItem('cm-a11y', JSON.stringify({ fs, hc })); } catch { /* blocked */ }
+  });
+  document.addEventListener('click', (e) => { if (a11y.open && !a11y.contains(e.target)) a11y.open = false; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && a11y.open) { a11y.open = false; a11y.querySelector('summary').focus(); } });
+}
+
 // Header search
 const hq = $('#hq');
-if (hq) autocomplete(hq, $('#hq-list'));
+if (hq) autocomplete(hq, $('#hq-list'), { global: true });
 
 // Mobile menu: close when clicking outside or pressing Escape
 const menu = $('.nav-menu');
 if (menu) {
   document.addEventListener('click', (e) => { if (menu.open && !menu.contains(e.target)) menu.open = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary').focus(); } });
+}
+
+// Installable app: the service worker keeps assets and visited pages for offline use.
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* not available */ }); });
 }
 
 // Event alarms ring on every page of the site.

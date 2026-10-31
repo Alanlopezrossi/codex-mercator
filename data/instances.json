@@ -1,0 +1,13 @@
+{
+  "source": "Curated by Bazaar Ledger (game facts; descriptions written for this site). Names are resolved at build time from the official API maps.",
+  "strikes": [
+    { "x": ["Saga de la Escarcha", "The Icebrood Saga"], "hub": "Eye of the North", "list": ["Shiverpeaks Pass", "Voice of the Fallen and Claw of the Fallen", "Fraenir of Jormag", "Boneskinner", "Whisper of Jormag", "Forging Steel", "Cold War"] },
+    { "x": ["End of Dragons", "End of Dragons"], "hub": "Arborstone", "list": ["Aetherblade Hideout", "Xunlai Jade Junkyard", "Kaineng Overlook", "Harvest Temple", "Old Lion's Court"] },
+    { "x": ["Secrets of the Obscure", "Secrets of the Obscure"], "hub": "The Wizard's Tower", "list": ["Cosmic Observatory", "Temple of Febe"] }
+  ],
+  "fractals": {
+    "hub": "Lion's Arch",
+    "d": ["Los Fractales de la Niebla son mazmorras cortas para 5 jugadores con dificultad escalable del nivel 1 al 100. Cada día hay fractales diarios por nivel y fractales recomendados que dan recompensas extra. A partir de cierto nivel necesitás Resistencia a la Agonía (infusiones) para no recibir daño de agonía.", "The Fractals of the Mists are short 5-player dungeons with difficulty scaling from tier 1 to 100. Every day there are daily fractals per tier and recommended fractals with extra rewards. From a certain tier you need Agony Resistance (infusions) to avoid agony damage."],
+    "currencies": ["Fractal Relic", "Pristine Fractal Relic"]
+  }
+}
