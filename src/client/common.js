@@ -49,3 +49,8 @@ if (menu) {
 
 // Event alarms ring on every page of the site.
 initAlarms();
+
+// Ad boxes (only present when ads are enabled): ask AdSense to fill each one once.
+for (const ins of document.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])')) {
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { /* blocked by the visitor */ }
+}

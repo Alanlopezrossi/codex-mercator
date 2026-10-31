@@ -1,4 +1,5 @@
 // HTML page layout. Used by the build (static pages) and by the Worker (item pages).
+import { adSlot, supportLinks, monetizationHead } from './monetize.js';
 import { esc } from './format.js';
 import { LANGS, ROUTES, SITE_NAME, pagePath, t } from './i18n.js';
 
@@ -74,6 +75,7 @@ ${(o.scripts || []).map((s) => `<link rel="modulepreload" href="${A}/pages/${s}.
 <link rel="stylesheet" href="${A}/main.css">
 ${(o.styles || []).map((s) => `<link rel="stylesheet" href="${A}/${s}.css">`).join('')}
 <script src="${A}/theme.js"></script>
+${monetizationHead(meta.mon)}
 ${ld}
 </head>
 <body data-lang="${lang}" data-page="${esc(o.page || '')}" data-assets="${A}" data-data="/data/${meta.dataVersion}" data-search="${esc(meta.searchFile || '')}" data-built="${esc(meta.builtAt)}">
@@ -102,6 +104,7 @@ ${ld}
 </header>
 <main id="main" class="wrap" tabindex="-1">
 ${o.body}
+${o.ads === false ? '' : adSlot(lang, meta.mon, 'bottom')}
 </main>
 <footer class="site-footer">
   <div class="wrap footer-grid">
@@ -115,6 +118,7 @@ ${o.body}
       <li><a href="${pagePath(lang, 'favorites')}">${esc(t(lang, 'nav.favorites'))}</a></li>
       <li><a href="${pagePath(lang, 'legal')}">${esc(t(lang, 'nav.legal'))}</a></li>
       <li><a href="${pagePath(lang, 'privacy')}">${esc(t(lang, 'nav.privacy'))}</a></li>
+      ${supportLinks(lang, meta.mon)}
     </ul>
   </div>
   <div class="wrap legal-notice small muted">

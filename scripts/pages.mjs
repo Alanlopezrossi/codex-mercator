@@ -276,10 +276,17 @@ function legal(lang, meta) {
 <p>If you are a rights holder and believe some content should not be here, write to <a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a> and we will review it right away.</p>`);
 }
 
-function privacy(lang) {
+function privacy(lang, meta) {
+  const m = meta.mon || {};
+  const adsEs = m.adClient ? `<h2>Publicidad</h2>
+<p>El sitio se financia con anuncios de Google AdSense. Google y sus socios pueden usar cookies o identificadores para mostrar anuncios y medir su rendimiento, y, si lo aceptás, para personalizarlos. En el Espacio Económico Europeo, el Reino Unido y Suiza te pedimos tu consentimiento antes, mediante el mensaje de privacidad de Google. Podés cambiar tu elección en cualquier momento desde ese mensaje o en <a href="https://adssettings.google.com" rel="noopener">la configuración de anuncios de Google</a>. Más información: <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">cómo usa Google los datos de los sitios que usan sus servicios</a>.</p>` : '';
+  const adsEn = m.adClient ? `<h2>Advertising</h2>
+<p>The site is funded by Google AdSense ads. Google and its partners may use cookies or identifiers to show ads and measure them and, if you agree, to personalize them. In the European Economic Area, the UK and Switzerland we ask for your consent first, through Google's privacy message. You can change your choice at any time from that message or in <a href="https://adssettings.google.com" rel="noopener">Google's ad settings</a>. More information: <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">how Google uses data from sites that use its services</a>.</p>` : '';
+  const statEs = m.cfBeacon ? 'Usamos Cloudflare Web Analytics para contar visitas de forma agregada: no usa cookies ni te identifica.' : 'Si activamos estadísticas de visitas, serán agregadas y sin cookies (Cloudflare Web Analytics), y lo vamos a indicar en esta página.';
+  const statEn = m.cfBeacon ? 'We use Cloudflare Web Analytics to count visits in aggregate: it uses no cookies and does not identify you.' : 'If we enable visit statistics, they will be aggregated and cookie-free (Cloudflare Web Analytics), and this page will say so.';
   return prose(lang, 'privacy.title', `
 <p class="muted small">Última revisión: 29 de octubre de 2026.</p>
-<p>Bazaar Ledger no tiene cuentas de usuario, formularios ni publicidad personalizada, y <strong>no usa cookies</strong>.</p>
+${m.adClient ? '<p>Bazaar Ledger no tiene cuentas de usuario ni formularios. El sitio en sí no usa cookies; los anuncios de Google sí pueden usarlas (ver «Publicidad»).</p>' : '<p>Bazaar Ledger no tiene cuentas de usuario, formularios ni publicidad personalizada, y <strong>no usa cookies</strong>.</p>'}
 <h2>Qué se guarda en tu navegador</h2>
 <p>Solo preferencias que nunca salen de tu dispositivo: el tema claro u oscuro, tus ítems favoritos y una copia en caché del índice de ítems para que la búsqueda sea rápida. Podés borrarlas cuando quieras limpiando los datos del sitio en tu navegador.</p>
 <h2>Conexiones a terceros</h2>
@@ -287,11 +294,12 @@ function privacy(lang) {
 <h2>Alojamiento</h2>
 <p>El sitio está alojado en Cloudflare, que procesa datos técnicos (IP, navegador, página visitada) para servirlo y protegerlo de ataques, según su <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">política de privacidad</a>. No usamos esos datos para identificarte.</p>
 <h2>Estadísticas</h2>
-<p>Si activamos estadísticas de visitas, serán agregadas y sin cookies (Cloudflare Web Analytics), y lo vamos a indicar en esta página.</p>
+<p>${statEs}</p>
+${adsEs}
 <h2>Contacto</h2>
 <p><a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a></p>`, `
 <p class="muted small">Last revised: 29 October 2026.</p>
-<p>Bazaar Ledger has no user accounts, forms or personalized advertising, and <strong>does not use cookies</strong>.</p>
+${m.adClient ? "<p>Bazaar Ledger has no user accounts or forms. The site itself uses no cookies; Google's ads may (see “Advertising”).</p>" : '<p>Bazaar Ledger has no user accounts, forms or personalized advertising, and <strong>does not use cookies</strong>.</p>'}
 <h2>What is stored in your browser</h2>
 <p>Only preferences that never leave your device: light or dark theme, your favorite items and a cached copy of the item index so search is fast. You can delete them at any time by clearing this site's data in your browser.</p>
 <h2>Third-party connections</h2>
@@ -299,25 +307,31 @@ function privacy(lang) {
 <h2>Hosting</h2>
 <p>The site is hosted on Cloudflare, which processes technical data (IP, browser, page visited) to serve it and protect it from attacks, under its <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">privacy policy</a>. We do not use that data to identify you.</p>
 <h2>Analytics</h2>
-<p>If we enable visit statistics, they will be aggregated and cookie-free (Cloudflare Web Analytics), and this page will say so.</p>
+<p>${statEn}</p>
+${adsEn}
 <h2>Contact</h2>
 <p><a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a></p>`);
 }
 
-function about(lang) {
+function about(lang, meta) {
+  const m = meta.mon || {};
+  const supEs = `<h2>Cómo se sostiene</h2><p>El sitio es y va a seguir siendo gratis${m.adClient ? ', y se paga con unos pocos anuncios que no tapan el contenido' : ''}.${m.donate ? ` Si te sirve, podés <a href="${esc(m.donate)}" rel="noopener" target="_blank">apoyarlo con una donación</a>; no desbloquea contenido, todo sigue siendo para todos.` : ''}${m.affiliate ? ` Si vas a comprar el juego o una expansión, hacerlo desde <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">nuestro enlace de afiliado</a> también ayuda, sin costo extra para vos.` : ''}</p>`;
+  const supEn = `<h2>How it is funded</h2><p>The site is and will stay free${m.adClient ? ', paid for by a few ads that never cover the content' : ''}.${m.donate ? ` If it helps you, you can <a href="${esc(m.donate)}" rel="noopener" target="_blank">support it with a donation</a>; it does not unlock anything, everything stays available to everyone.` : ''}${m.affiliate ? ` If you are buying the game or an expansion, using <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">our affiliate link</a> also helps, at no extra cost to you.` : ''}</p>`;
   return prose(lang, 'about.title', `
 <p>Bazaar Ledger es una base de datos de Guild Wars 2 hecha por y para la comunidad: todos los ítems del juego, sus recetas, la Forja Mística y el bazar en vivo, en español y en inglés.</p>
 <h2>Cómo funciona</h2>
 <ul><li>Varias veces por día, el sitio descarga los datos de la API oficial y regenera todas las fichas.</li><li>Los precios que ves en la ficha de un ítem y en el bazar se piden en vivo a la API cuando abrís la página.</li><li>No hay cuentas ni rastreo: lo que guardás (favoritos, tema) queda solo en tu navegador.</li></ul>
 <h2>Qué viene</h2>
 <p>Recomendaciones de venta, crafteo rentable, historial de precios y planificador de legendarias.</p>
-<p>¿Encontraste un error? Escribinos a <a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a>.</p>`, `
+<p>¿Encontraste un error? Escribinos a <a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a>.</p>
+${supEs}`, `
 <p>Bazaar Ledger is a Guild Wars 2 database made by and for the community: every item in the game, its recipes, the Mystic Forge and the live trading post, in English and Spanish.</p>
 <h2>How it works</h2>
 <ul><li>Several times a day the site downloads the official API data and rebuilds every item page.</li><li>Prices on item pages and on the trading post are requested live from the API when you open the page.</li><li>No accounts and no tracking: what you save (favorites, theme) stays in your browser.</li></ul>
 <h2>Coming next</h2>
 <p>Selling recommendations, profitable crafting, price history and a legendary planner.</p>
-<p>Found a mistake? Write to <a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a>.</p>`);
+<p>Found a mistake? Write to <a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a>.</p>
+${supEn}`);
 }
 
 function notFound(lang) {
@@ -329,7 +343,7 @@ export function renderStaticPages(meta, { popular = [] } = {}) {
   for (const lang of LANGS) {
     const base = { lang, meta };
     const P = (page, body, extra = {}) => {
-      out[pagePath(lang, page)] = layout({ ...base, page, alternates: alternatesFor(page), title: extra.title ?? t(lang, `nav.${page}`), description: extra.description || t(lang, `${extra.lead || page}`), body, scripts: extra.scripts, styles: extra.styles, jsonLd: extra.jsonLd, noindex: extra.noindex });
+      out[pagePath(lang, page)] = layout({ ...base, page, ads: extra.ads, alternates: alternatesFor(page), title: extra.title ?? t(lang, `nav.${page}`), description: extra.description || t(lang, `${extra.lead || page}`), body, scripts: extra.scripts, styles: extra.styles, jsonLd: extra.jsonLd, noindex: extra.noindex });
     };
     P('events', events(lang), {
       title: '', description: t(lang, 'ev.lead'), scripts: ['events'],
@@ -341,13 +355,13 @@ export function renderStaticPages(meta, { popular = [] } = {}) {
     P('professions', professions(lang), { title: t(lang, 'prof.title'), description: t(lang, 'prof.lead'), scripts: ['professions'] });
     P('gear', gear(lang), { title: t(lang, 'gear.title'), description: t(lang, 'gear.lead'), scripts: ['gear'] });
     P('vendors', vendors(lang), { title: t(lang, 'vendors.title'), description: t(lang, 'vendors.lead'), scripts: ['vendors'] });
-    P('map', map(lang), { title: t(lang, 'map.title'), description: t(lang, 'map.lead'), scripts: ['map'], styles: ['map'] });
+    P('map', map(lang), { title: t(lang, 'map.title'), description: t(lang, 'map.lead'), scripts: ['map'], styles: ['map'], ads: false });
     P('calculator', calculator(lang), { title: t(lang, 'calc.title'), description: t(lang, 'calc.lead'), scripts: ['calculator'] });
     P('favorites', favorites(lang), { title: t(lang, 'fav.title'), description: t(lang, 'fav.lead'), scripts: ['home'], noindex: true });
-    P('legal', legal(lang, meta), { title: t(lang, 'legal.title'), description: t(lang, 'footerDisclaimer') });
-    P('privacy', privacy(lang), { title: t(lang, 'privacy.title'), description: lang === 'es' ? 'Bazaar Ledger no usa cookies ni cuentas de usuario.' : 'Bazaar Ledger uses no cookies and no user accounts.' });
-    P('about', about(lang), { title: t(lang, 'about.title'), description: t(lang, 'home.lead') });
-    out[`/${lang}/404`] = layout({ ...base, page: '', alternates: { es: '/es/', en: '/en/' }, title: t(lang, 'notfound.title'), description: t(lang, 'notfound.lead'), body: notFound(lang), noindex: true });
+    P('legal', legal(lang, meta), { title: t(lang, 'legal.title'), description: t(lang, 'footerDisclaimer'), ads: false });
+    P('privacy', privacy(lang, meta), { ads: false, title: t(lang, 'privacy.title'), description: lang === 'es' ? 'Bazaar Ledger no usa cookies ni cuentas de usuario.' : 'Bazaar Ledger uses no cookies and no user accounts.' });
+    P('about', about(lang, meta), { title: t(lang, 'about.title'), description: t(lang, 'home.lead'), ads: false });
+    out[`/${lang}/404`] = layout({ ...base, page: '', alternates: { es: '/es/', en: '/en/' }, title: t(lang, 'notfound.title'), description: t(lang, 'notfound.lead'), body: notFound(lang), noindex: true, ads: false });
   }
   return out;
 }

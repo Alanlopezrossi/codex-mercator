@@ -588,3 +588,11 @@ a.v-place:hover, a.v-place:focus-visible { border-color: var(--accent); color: v
   .v-count { text-align: left; }
   .v-body { padding: 4px 14px 14px; }
 }
+
+/* ---------- Ads (only when enabled): labeled, reserved height so the page never jumps ---------- */
+.ad-slot { margin: 24px 0; padding: 8px 0 0; border-top: 1px solid var(--border); text-align: center; min-width: 0; overflow: hidden; }
+.ad-label { margin: 0 0 6px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.ad-slot .adsbygoogle { display: block; min-height: 100px; }
+@media (max-width: 600px) { .ad-slot .adsbygoogle { min-height: 250px; } }
+.ad-slot:has(ins[data-ad-status='unfilled']) { display: none; }
+.support-link { color: var(--accent-2); font-weight: 600; }

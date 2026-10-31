@@ -9,7 +9,7 @@ import { iconUrl } from '../shared/format.js';
 import { securityHeaders } from '../shared/security.js';
 
 const ITEM_RE = /^\/(es|en)\/item\/(\d{1,7})(?:-([a-z0-9-]*))?\/?$/;
-const SEC = securityHeaders();
+const SEC = securityHeaders(META.mon);
 
 function withHeaders(res, extra = {}) {
   const h = new Headers(res.headers);
@@ -82,7 +82,7 @@ async function itemPage(request, env, ctx, m) {
     title: name,
     description: itemDescription(lang, it),
     alternates: { es: itemPath('es', id, itemTitle('es', it)), en: itemPath('en', id, itemTitle('en', it)) },
-    body: renderItemBody(lang, it),
+    body: renderItemBody(lang, it, META.mon),
     scripts: ['item'],
     jsonLd: itemJsonLd(lang, it, base),
     ogImage: it.ic ? iconUrl(it.ic) : undefined,

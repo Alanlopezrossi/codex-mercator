@@ -3,6 +3,7 @@ import { esc, coin, coinText, iconUrl, num } from './format.js';
 import { LANGS, pagePath, t, tr, itemPath, SHOWN_FLAGS } from './i18n.js';
 import { ICONS } from './layout.js';
 import { GUIDES } from '../generated/guides.js';
+import { adSlot } from './monetize.js';
 
 const L = (lang) => LANGS.indexOf(lang);
 
@@ -212,7 +213,7 @@ function priceHtml(lang, it) {
   </section>`;
 }
 
-export function renderItemBody(lang, it) {
+export function renderItemBody(lang, it, mon = {}) {
   const li = L(lang);
   const name = itemTitle(lang, it);
   const otherName = it.n[1 - li] && it.n[1 - li] !== name ? it.n[1 - li] : '';
@@ -250,6 +251,7 @@ export function renderItemBody(lang, it) {
       ${detailsList(lang, it)}
     </section>
   </div>
+  ${adSlot(lang, mon, 'in')}
   ${guidesHtml(lang, it)}
   ${recipesHtml(lang, it)}
   ${forgeHtml(lang, it)}

@@ -9,6 +9,7 @@ import { SHARD_SIZE, shardOf } from '../src/shared/data.js';
 import { renderStaticPages } from './pages.mjs';
 import { securityHeaders } from '../src/shared/security.js';
 import { makeTranslator } from './lib/wiki-i18n.mjs';
+import { monetizationFromEnv } from '../src/shared/monetize.js';
 
 const ROOT = path.resolve('.');
 const RAW = path.join(ROOT, '.cache/raw');
@@ -540,7 +541,9 @@ function walk(dir) {
 
 // ---------- 10. Static files, pages, SEO ----------
 fs.cpSync('static', DIST, { recursive: true });
-const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile };
+const mon = monetizationFromEnv(process.env);
+const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile, mon };
+console.log(`[build] monetization: ads ${mon.adClient ? (mon.adSlot ? 'on (with ad boxes)' : 'on (script only)') : 'off'}, donate ${mon.donate ? 'on' : 'off'}, affiliate ${mon.affiliate ? 'on' : 'off'}, analytics ${mon.cfBeacon ? 'on' : 'off'}`);
 const POPULAR = [19721, 19976, 19675, 24295, 19685, 24277, 30689, 46731];
 const popular = POPULAR.map((id) => items.get(id)).filter(Boolean).map((o) => ({ id: o.id, n: o.n, ic: o.ic, r: o.r }));
 const CONTACT = process.env.CONTACT_EMAIL || 'contact@bazaarledger.com';
@@ -574,12 +577,14 @@ for (let i = 0; i * chunk < urls.length; i++) {
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemapFiles.map((f) => `<sitemap><loc>${SITE_URL}/${f}</loc><lastmod>${today}</lastmod></sitemap>`).join('')}</sitemapindex>`);
 fs.mkdirSync(path.join(DIST, '.well-known'), { recursive: true });
 fs.writeFileSync(path.join(DIST, '.well-known/security.txt'), `Contact: mailto:${CONTACT}\nExpires: ${new Date(Date.now() + 365 * 864e5).toISOString()}\nPreferred-Languages: es, en\nCanonical: ${SITE_URL}/.well-known/security.txt\n`);
+// ads.txt: declares who may sell ads on this site (required by AdSense).
+if (mon.adClient) fs.writeFileSync(path.join(DIST, 'ads.txt'), `google.com, ${mon.adClient.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n`);
 fs.writeFileSync(path.join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /data/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 
 // Security and cache headers for static assets (the Worker adds its own to dynamic responses).
 fs.writeFileSync(path.join(DIST, '_headers'), headersFile());
 function headersFile() {
-  const sec = securityHeaders();
+  const sec = securityHeaders(mon);
   const lines = ['/*', ...Object.entries(sec).map(([k, v]) => `  ${k}: ${v}`)];
   lines.push('/assets/*', '  Cache-Control: public, max-age=31536000, immutable');
   lines.push('/data/*', '  Cache-Control: public, max-age=31536000, immutable', '  X-Robots-Tag: noindex');

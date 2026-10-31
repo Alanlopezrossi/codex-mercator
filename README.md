@@ -87,3 +87,17 @@ Step by step in **[docs/DEPLOY.md](docs/DEPLOY.md)** (Cloudflare connected to Gi
 2. Recommendations, flipping and profitable crafting (reusing `analysis.js` from gw2-bazar).
 3. Price history (Workers KV or a separate cron).
 4. Legendary planner, skins, minis and mounts.
+
+## Monetization (optional build variables)
+
+Set them in Cloudflare → Workers → codex-mercator → Settings → Build → Variables and secrets, then redeploy. Nothing shows until they are set.
+
+| Variable | Example | What it does |
+|---|---|---|
+| `ADSENSE_CLIENT` | `ca-pub-1234567890123456` | Loads Google AdSense, writes `/ads.txt`, opens the CSP for Google ads and adds an "Advertising" section to the privacy page. |
+| `ADSENSE_SLOT` | `1234567890` | ID of a responsive display ad unit: labeled ad boxes at the bottom of each page and one inside item pages (never on the map, legal, privacy or about pages). |
+| `DONATE_URL` | `https://ko-fi.com/…` | "Support the site" link in the footer and on the About page. |
+| `AFFILIATE_URL` | `https://…` | ArenaNet partner link to buy the game, marked as an affiliate link. |
+| `CF_ANALYTICS_TOKEN` | 32 hex chars | Cloudflare Web Analytics (cookie-free visit statistics). |
+
+For visitors in the EEA, UK and Switzerland, turn on Google's consent message in AdSense → Privacy & messaging (a certified CMP is required there).
