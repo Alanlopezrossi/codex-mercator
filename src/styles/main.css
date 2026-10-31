@@ -431,6 +431,41 @@ a.evt-name { color: inherit; text-decoration: underline; text-decoration-color: 
 .evt-exit:hover, .evt-exit:focus-visible { opacity: 1; color: var(--text); background: var(--surface-2); }
 #evHidden .btn { margin: 2px; }
 
+/* Alarms */
+.ev-alarms { margin-bottom: var(--gap); }
+.ev-alarms > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ev-alarms > summary::-webkit-details-marker { display: none; }
+.ev-alarms > summary::after { content: '▾'; margin-left: auto; color: var(--muted); transition: transform 0.15s; }
+.ev-alarms[open] > summary::after { transform: rotate(180deg); }
+.al-title { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md); }
+.al-tools { display: grid; gap: 12px; margin: 12px 0; }
+.al-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
+.al-vol { min-width: 0; }
+.al-vol input { width: 160px; max-width: 100%; accent-color: var(--accent); }
+.al-chips { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.al-chip { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; padding: 4px 4px 4px 10px; border: 1px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius-sm); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.al-x { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+.al-x:hover, .al-x:focus-visible { color: var(--text); background: var(--surface-2); }
+.ev-bell { border: 1px solid var(--border-strong); background: var(--bg-2); color: var(--text); cursor: pointer; border-radius: 999px; min-width: 32px; min-height: 32px; padding: 0 6px; font-size: 0.95rem; line-height: 1; vertical-align: middle; filter: grayscale(1); opacity: 0.75; }
+.ev-bell:hover, .ev-bell:focus-visible { opacity: 1; filter: none; border-color: var(--accent); }
+.ev-bell.on { filter: none; opacity: 1; border-color: var(--accent); background: var(--accent-soft); }
+.ev-bell.mini { min-width: 0; min-height: 0; padding: 1px 4px; margin-left: 4px; font-size: 0.75rem; border-color: rgb(0 0 0 / 0.35); background: rgb(255 255 255 / 0.55); color: #111; }
+.evt-seg.dark .ev-bell.mini, .evt-seg.future .ev-bell.mini { background: rgb(0 0 0 / 0.35); border-color: rgb(255 255 255 / 0.4); color: #fff; }
+:root[data-theme='light'] .evt-seg.future .ev-bell.mini { background: rgb(255 255 255 / 0.7); border-color: rgb(0 0 0 / 0.3); color: #111; }
+.ev-bell.mini.on { background: #f3d27e; border-color: #7a5810; color: #111; }
+.alarm-float { position: fixed; right: 18px; bottom: 18px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; max-width: min(380px, calc(100vw - 32px)); }
+.alarm-card { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); color: var(--text); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.45), 0 0 0 4px var(--accent-soft); animation: alarm-in 0.35s ease-out, alarm-glow 2s ease-in-out infinite; }
+.alarm-card p { margin: 0; }
+.alarm-name { font-weight: 700; }
+.alarm-ic { font-size: 28px; animation: bell-wiggle 1.6s ease-in-out infinite; }
+.alarm-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.alarm-all { box-shadow: 0 4px 14px rgb(0 0 0 / 0.35); }
+@keyframes alarm-in { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes alarm-glow { 50% { box-shadow: 0 10px 30px rgb(0 0 0 / 0.45), 0 0 0 8px var(--accent-soft); } }
+@keyframes bell-wiggle { 0%, 60%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(-14deg); } 20%, 40% { transform: rotate(14deg); } }
+@media (prefers-reduced-motion: reduce) { .alarm-card, .alarm-ic { animation: none; } }
+@media (max-width: 600px) { .alarm-float { right: 12px; left: 12px; bottom: 12px; max-width: none; align-items: stretch; } }
+
 /* ---------- Map ---------- */
 .map-layout { display: grid; gap: var(--gap); margin-bottom: 12px; }
 @media (max-width: 899px) { .map-layout .gmap { order: -1; height: 62vh; min-height: 360px; } }

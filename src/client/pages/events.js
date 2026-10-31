@@ -5,6 +5,8 @@ import { esc } from '../../shared/format.js';
 import { segments, segmentsAll } from '../../shared/events.js';
 import { pagePath } from '../../shared/i18n.js';
 import { norm } from '../lib/search.js';
+import { toast } from '../lib/toast.js';
+import { toggleAlarm, hasAlarm, alarmId, alarmList, removeAlarm, alarmSettings, setAlarmSettings, playChime, testAlarm, askNotifications, onAlarmsChange } from '../lib/alarms.js';
 
 // Hidden by default: day/night cycles, PvP tournaments and festivals that are not always active.
 const HIDE = ['core-dn', 'eod-dn', 'voe-dn', 'core-ateu', 'core-atna', 'festival-lc', 'festival-db'];
@@ -27,6 +29,13 @@ const hiddenEl = $('#evHidden');
 const nowEl = $('#evnow');
 const soonEl = $('#evsoon');
 let events = [];
+let byKey = new Map();
+
+// Bell button: turns the daily alarm of one event segment on or off.
+const bell = (ev, r, label, cls = '') => {
+  const on = hasAlarm(alarmId(ev.key, r));
+  return `<button type="button" class="ev-bell${on ? ' on' : ''}${cls ? ` ${cls}` : ''}" data-bell="${esc(ev.key)}" data-r="${esc(r)}" aria-pressed="${on}" aria-label="${esc(t(on ? 'al.unset' : 'al.set'))}: ${esc(label)}" title="${esc(t(on ? 'al.unset' : 'al.set'))}">${on ? '🔔' : '🔕'}</button>`;
+};
 
 const fmtT = new Intl.DateTimeFormat(lang === 'es' ? 'es-AR' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: lang !== 'es' });
 const fmtS = new Intl.DateTimeFormat(lang === 'es' ? 'es-AR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: lang !== 'es' });
@@ -101,7 +110,7 @@ function renderTimeline(nowMin) {
         const link = mapLink(seg, ev);
         // Future segments: neutral background with the event color as a top band (keeps the text readable).
         return `<div class="${cls}" data-w="${w}" ${future ? `data-band="${esc(bgOf(seg.col))}"` : `data-bg="${esc(bgOf(seg.col))}"`} title="${esc(title)}">
-          <span class="evt-time">${esc(timeOf(sg.start))}</span>
+          <span class="evt-time">${esc(timeOf(sg.start))}${bell(ev, sg.r, label, 'mini')}</span>
           ${link ? `<a class="evt-name" href="${esc(link)}" title="${esc(t('ev.onMap'))}">${esc(label)}</a>` : `<span class="evt-name">${esc(label)}</span>`}
           ${seg.wp ? `<button type="button" class="evt-chat" data-copy="${esc(seg.wp)}" aria-label="${esc(t('copy'))} ${esc(seg.wp)}">${esc(seg.wp)}</button>` : ''}
         </div>`;
@@ -130,7 +139,7 @@ function row(ev, sg, nowMin, live) {
   return `<li class="ev${live ? ' ev-live' : ''}">
     <time class="ev-time" datetime="${new Date(sg.start * 60000).toISOString()}">${esc(timeOf(sg.start))}</time>
     <div class="ev-main"><p class="ev-name">${link ? `<a href="${esc(link)}">${esc(label)}</a>` : esc(label)}</p><p class="small muted">${esc(ev.n[li])} · ${esc(ev.c[li])} · ${sg.end - sg.start} min</p></div>
-    <span class="ev-rel small">${esc(when)}</span>
+    <span class="ev-rel small">${esc(when)} ${bell(ev, sg.r, label)}</span>
     ${seg.wp ? `<button type="button" class="btn btn-small copy-btn" data-copy="${esc(seg.wp)}" aria-label="${esc(t('copy'))} ${esc(seg.wp)}"><code>${esc(seg.wp)}</code></button>` : '<span></span>'}
   </li>`;
 }
@@ -167,9 +176,51 @@ function tick() {
   $('#evUtc').textContent = `${d.toISOString().slice(11, 16)} ${t('ev.utc')}`;
 }
 
+// ---------- Alarms panel ----------
+const alForm = $('#evAlarms');
+function paintAlarms() {
+  if (!alForm) return;
+  const cfg = alarmSettings();
+  for (const el of alForm.querySelectorAll('input[name="allead"]')) el.checked = Number(el.value) === cfg.lead;
+  for (const el of alForm.querySelectorAll('input[name="alsound"]')) el.checked = el.value === cfg.sound;
+  $('#alvol').value = String(cfg.vol);
+  const nb = $('#alNotif');
+  const perm = 'Notification' in window ? Notification.permission : 'denied';
+  const on = cfg.notif && perm === 'granted';
+  nb.textContent = perm === 'denied' ? t('al.notifBlocked') : t(on ? 'al.notifActive' : 'al.notifOn');
+  nb.disabled = perm === 'denied';
+  nb.setAttribute('aria-pressed', String(on));
+  const list = alarmList();
+  $('#alCount').textContent = list.length ? `(${list.length} ${t('al.count')})` : '';
+  $('#alList').innerHTML = list.length
+    ? `<p class="small"><strong>${esc(t('al.active'))}:</strong></p><ul class="al-chips">${list.map((a) => `<li class="al-chip"><span>🔔 ${esc(a.n?.[li] || a.n?.[1] || '')}</span><span class="small muted">${esc(a.m?.[li] || a.m?.[1] || '')}</span><button type="button" class="al-x" data-aldel="${esc(a.id)}" aria-label="${esc(t('al.remove'))}: ${esc(a.n?.[li] || '')}" title="${esc(t('al.remove'))}">✕</button></li>`).join('')}</ul>`
+    : `<p class="small muted">${esc(t('al.none'))}</p>`;
+}
+if (alForm) {
+  alForm.addEventListener('change', (e) => {
+    if (e.target.name === 'allead') setAlarmSettings({ lead: Number(e.target.value) });
+    if (e.target.name === 'alsound') { setAlarmSettings({ sound: e.target.value }); playChime(e.target.value); }
+    if (e.target.id === 'alvol') { setAlarmSettings({ vol: Number(e.target.value) }); playChime(); }
+  });
+  $('#alTest').addEventListener('click', () => testAlarm());
+  $('#alNotif').addEventListener('click', async () => {
+    const cfg = alarmSettings();
+    if (cfg.notif && 'Notification' in window && Notification.permission === 'granted') setAlarmSettings({ notif: false });
+    else await askNotifications();
+    paintAlarms();
+  });
+  alForm.addEventListener('click', (e) => {
+    const d = e.target.closest('[data-aldel]');
+    if (d) removeAlarm(d.dataset.aldel);
+  });
+  // Open the panel by default once the visitor has alarms.
+  if (alarmList().length) alForm.open = true;
+}
+
 async function init() {
   try {
     events = (await fetch(`${document.body.dataset.data}/events.json`).then((r) => r.json())).events;
+    byKey = new Map(events.map((e) => [e.key, e]));
   } catch {
     tl.innerHTML = `<p class="notice">${esc(t('error'))}</p>`;
     return;
@@ -195,10 +246,21 @@ async function init() {
     const h = e.target.closest('[data-hide]');
     if (h) { st.hidden.add(h.dataset.hide); save(); render(); return; }
     const s = e.target.closest('[data-show]');
-    if (s) { st.hidden.delete(s.dataset.show); save(); render(); }
+    if (s) { st.hidden.delete(s.dataset.show); save(); render(); return; }
+    const b = e.target.closest('[data-bell]');
+    if (b) {
+      const ev = byKey.get(b.dataset.bell);
+      const seg = ev?.s[b.dataset.r];
+      if (!seg) return;
+      const on = toggleAlarm({ ev: ev.key, r: b.dataset.r, n: seg.n, m: ev.n, wp: seg.wp || '' });
+      const lead = alarmSettings().lead;
+      toast(on ? `${t('al.onToast')}: ${seg.n[li] || seg.n[1]}${lead ? ` (−${lead} min)` : ''}` : t('al.offToast'));
+    }
   });
   render();
   tick();
+  paintAlarms();
+  onAlarmsChange(() => { paintAlarms(); render(); });
   setInterval(render, 30000);
   setInterval(tick, 1000);
 }

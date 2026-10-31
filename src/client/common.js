@@ -2,6 +2,7 @@
 import { $, t } from './lib/env.js';
 import { autocomplete } from './lib/autocomplete.js';
 import { toast } from './lib/toast.js';
+import { initAlarms } from './lib/alarms.js';
 
 // Theme
 const btn = $('#themeBtn');
@@ -45,3 +46,6 @@ if (menu) {
   document.addEventListener('click', (e) => { if (menu.open && !menu.contains(e.target)) menu.open = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary').focus(); } });
 }
+
+// Event alarms ring on every page of the site.
+initAlarms();

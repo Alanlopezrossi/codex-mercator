@@ -123,6 +123,21 @@ ${noscript(lang)}
   </div>
   <div id="evcats">${chips('evc', t(lang, 'ev.category'), [], { all: t(lang, 'all') })}</div>
 </form>
+<details class="card ev-alarms" id="evAlarms">
+  <summary><span class="al-title">🔔 ${esc(t(lang, 'al.title'))}</span> <span class="small muted" id="alCount"></span></summary>
+  <p class="small muted">${esc(t(lang, 'al.help'))}</p>
+  <div class="al-tools">
+    ${chips('allead', t(lang, 'al.lead'), [0, 1, 2, 5, 10, 15].map((m) => ({ v: m, label: m ? `${m} min` : t(lang, 'al.atStart') })), { current: 5 })}
+    ${chips('alsound', t(lang, 'al.sound'), [['bell', es ? 'Campanita' : 'Bell'], ['gong', es ? 'Gong suave' : 'Soft gong'], ['drops', es ? 'Gotas' : 'Drops'], ['marimba', 'Marimba']].map(([v, label]) => ({ v, label })), { current: 'bell' })}
+    <div class="al-row">
+      <div class="field al-vol"><label for="alvol">${esc(t(lang, 'al.volume'))}</label><input id="alvol" type="range" min="0.05" max="1" step="0.05" value="0.5"></div>
+      <button type="button" class="btn btn-small" id="alTest">▶ ${esc(t(lang, 'al.test'))}</button>
+      <button type="button" class="btn btn-small" id="alNotif" aria-pressed="false">${esc(t(lang, 'al.notifOn'))}</button>
+    </div>
+  </div>
+  <div id="alList" class="al-list" aria-live="polite"></div>
+  <p class="small muted">${esc(t(lang, 'al.note'))}</p>
+</details>
 <section aria-labelledby="evtl-h">
   <div class="section-head"><h2 id="evtl-h">${esc(t(lang, 'ev.timeline'))}</h2><p class="small muted">${esc(t(lang, 'ev.timelineHelp'))}</p></div>
   <div class="evt-scroll card" tabindex="0" role="region" aria-labelledby="evtl-h"><div id="evTimeline" class="evt-wrapper"></div></div>
