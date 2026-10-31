@@ -161,8 +161,11 @@ function acquisitionHtml(lang, it) {
     const rows = w.sold.map((r) => {
       // Rows whose cost or note could not be translated keep the English text, marked as such.
       const raw = isEs && r.en ? ' lang="en"' : '';
-      const where = [r.a?.[li], r.z?.[li]].filter(Boolean).join(', ');
-      return `<tr><td class="left">${r.k ? `<a href="${pagePath(lang, 'vendors')}#v=${esc(r.k)}">${esc(r.v[li])}</a>` : esc(r.v[li])}</td><td class="left">${esc(where)}</td><td class="left"${raw}>${esc(r.c[li])}</td><td class="left small muted"${raw}>${esc(r.n[li])}</td></tr>`;
+      // Older data has a/z; current data has a list of places (l).
+      const locs = r.l || [{ a: r.a, z: r.z }];
+      const where = locs.slice(0, 3).map((x) => [x.a?.[li], x.z?.[li]].filter(Boolean).join(', ')).filter(Boolean).join(' · ') + (locs.length > 3 ? ` · +${locs.length - 3}` : '');
+      const off = r.off || r.io ? ` <span class="tag">${isEs ? 'No disponible' : 'Unavailable'}</span>` : '';
+      return `<tr><td class="left">${r.k ? `<a href="${pagePath(lang, 'vendors')}#v=${esc(r.k)}">${esc(r.v[li])}</a>` : esc(r.v[li])}${off}</td><td class="left">${esc(where)}</td><td class="left"${raw}>${esc(r.c[li])}</td><td class="left small muted"${raw}>${esc(r.n[li])}</td></tr>`;
     }).join('');
     html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }

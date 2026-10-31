@@ -62,32 +62,49 @@ function itemMatches(v) {
 
 function itemsHtml(v, only) {
   const rows = v.it.map((row, i) => [row, i]).filter(([, i]) => !only || only.has(i));
-  return `<ul class="v-items">${rows.map(([[id, cEs, cEn, nEs, nEn]]) => {
+  return `<ul class="v-items">${rows.map(([[id, cEs, cEn, nEs, nEn, off]]) => {
     const ref = ITEMS[id] || [`#${id}`, `#${id}`, 'Basic', ''];
     const name = ref[li] || ref[1];
     const cost = lang === 'es' ? cEs : cEn;
     const note = lang === 'es' ? nEs : nEn;
-    return `<li class="v-item"><a class="ref" href="${itemPath(lang, id, name)}">${ref[3] ? `<img src="${esc(iconUrl(ref[3]))}" alt="" width="32" height="32" loading="lazy" class="ic r-${esc(ref[2])}">` : '<span class="ic ic-ph" aria-hidden="true"></span>'}<span class="ref-body"><span class="ref-name r-txt-${esc(ref[2])}">${esc(name)}</span>${cost ? `<span class="ref-sub">${esc(cost)}</span>` : ''}</span></a>${note ? `<p class="small muted v-note">${esc(note)}</p>` : ''}</li>`;
+    return `<li class="v-item${off ? ' is-off' : ''}">
+      <a class="v-item-link" href="${itemPath(lang, id, name)}">${ref[3] ? `<img src="${esc(iconUrl(ref[3]))}" alt="" width="40" height="40" loading="lazy" class="ic r-${esc(ref[2])}">` : '<span class="ic ic-ph" aria-hidden="true"></span>'}
+        <span class="v-item-body"><span class="v-item-name r-txt-${esc(ref[2])}">${esc(name)}</span>${cost ? `<span class="v-cost">${esc(cost)}</span>` : ''}${note ? `<span class="v-note">${esc(note)}</span>` : ''}${off ? `<span class="tag tag-small">${esc(t('vendors.off'))}</span>` : ''}</span>
+      </a></li>`;
   }).join('')}</ul>`;
+}
+
+const placeLabel = (l) => [L(l.a), L(l.z)].filter(Boolean).join(', ');
+function placesHtml(v) {
+  if (!v.loc.length) return `<p class="small muted v-noplace">${esc(t('vendors.noPlace'))}</p>`;
+  return `<ul class="v-places" aria-label="${esc(t('vendors.where'))}">${v.loc.map((l) => {
+    const href = mapHref(l, v);
+    const label = esc(placeLabel(l));
+    return `<li>${href ? `<a class="v-place" href="${esc(href)}" title="${esc(t('vendors.onMap'))}"><span aria-hidden="true">📍</span>${label}</a>` : `<span class="v-place is-plain"><span aria-hidden="true">📍</span>${label}</span>`}</li>`;
+  }).join('')}</ul>`;
+}
+
+function body(v, only) {
+  return `<div class="v-body">
+    <h3 class="v-h">${esc(t('vendors.where'))}</h3>${placesHtml(v)}
+    <h3 class="v-h">${esc(t('vendors.sells'))}${only?.size ? ` <span class="count">${num(only.size, lang)} / ${num(v.it.length, lang)}</span>` : ''}</h3>${itemsHtml(v, only?.size ? only : null)}
+  </div>`;
 }
 
 function card(v) {
   const name = L(v.n);
   const only = itemMatches(v);
   const open = !!single() || (only && only.size > 0);
-  const where = v.loc.length
-    ? `<ul class="v-where">${v.loc.slice(0, 6).map((l) => {
-      const label = [L(l.a), L(l.z)].filter(Boolean).join(', ');
-      const href = mapHref(l, v);
-      return `<li>📍 ${href ? `<a href="${esc(href)}" title="${esc(t('vendors.onMap'))}">${esc(label)}</a>` : esc(label)}</li>`;
-    }).join('')}${v.loc.length > 6 ? `<li class="muted">+${v.loc.length - 6}</li>` : ''}</ul>`
-    : `<p class="small muted">${esc(t('vendors.noPlace'))}</p>`;
-  return `<article class="card vendor" id="v-${esc(v.k)}">
-    <header class="vendor-head"><h2>${esc(name)}</h2>${v.off ? `<span class="tag">${esc(t('vendors.off'))}</span>` : ''}</header>
-    <p class="small muted vendor-sub">${esc(t('vendors.where'))}</p>
-    ${where}
-    <details class="v-sells" data-k="${esc(v.k)}"${open ? ' open' : ''}><summary>${esc(t('vendors.sells'))} ${num(only?.size || v.it.length, lang)}${only?.size ? ` / ${num(v.it.length, lang)}` : ''} ${esc(t('vendors.items'))}</summary>${open ? itemsHtml(v, only?.size ? only : null) : ''}</details>
-  </article>`;
+  const first = v.loc[0] ? placeLabel(v.loc[0]) : t('vendors.noPlace');
+  const more = v.loc.length > 1 ? ` · +${v.loc.length - 1}` : '';
+  return `<details class="vendor" id="v-${esc(v.k)}" data-k="${esc(v.k)}"${open ? ' open' : ''}>
+    <summary class="v-sum">
+      <span class="v-title"><span class="v-name">${esc(name)}</span>${v.off ? `<span class="tag tag-small">${esc(t('vendors.off'))}</span>` : ''}</span>
+      <span class="v-meta"><span class="v-where-short">${esc(first)}${esc(more)}</span></span>
+      <span class="v-count"><b>${num(only?.size || v.it.length, lang)}</b> ${esc(t('vendors.items'))}</span>
+    </summary>
+    ${open ? body(v, only) : ''}
+  </details>`;
 }
 
 function render() {
@@ -108,9 +125,9 @@ function render() {
 // Item lists are only built when a vendor is opened (some sell hundreds of things).
 list.addEventListener('toggle', (e) => {
   const d = e.target;
-  if (!d.matches?.('.v-sells') || !d.open || d.querySelector('.v-items')) return;
+  if (!d.matches?.('.vendor') || !d.open || d.querySelector('.v-body')) return;
   const v = vendors.find((x) => x.k === d.dataset.k);
-  if (v) d.insertAdjacentHTML('beforeend', itemsHtml(v, null));
+  if (v) d.insertAdjacentHTML('beforeend', body(v, null));
 }, true);
 pager.addEventListener('click', (e) => {
   const b = e.target.closest('[data-go]');

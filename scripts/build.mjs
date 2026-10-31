@@ -141,7 +141,42 @@ for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
 const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
 const W = makeTranslator({ items, currencies: names.currencies, places, achievements });
 // Vendors (NPCs) are keyed by their English name without the "(vendor currently unavailable)" suffix.
-const vendorBase = (v) => String(v || '').replace(/ \(vendor currently unavailable\)$/, '').trim();
+const vendorBase = (v) => String(v || '').replace(/\s*\((vendor|item) currently unavailable\)$/i, '').trim();
+// Places the official API does not name (game modes, hubs): Spanish names as shown in the game.
+const EXTRA_PLACES = { 'World vs. World': 'Mundo contra Mundo', 'Heart of the Mists': 'Corazón de la Niebla', 'Fractals of the Mists': 'Fractales de la Niebla', 'Edge of the Mists': 'Borde de la Niebla', 'Obsidian Sanctum': 'Santuario de Obsidiana', 'PvP Lobby': 'Vestíbulo JcJ' };
+for (const [en, es] of Object.entries(EXTRA_PLACES)) if (!places.has(en)) places.set(en, es);
+// The wiki lists several places in one cell ("A, B, C" for areas and zones, in the same order) and sometimes
+// leaves empty slots (",,,") or "(zone)" suffixes. Some place names contain a comma ("Tarir, the Forgotten City").
+function splitPlaces(raw) {
+  const parts = String(raw || '').replace(/\s*\(zone\)/gi, '').split(',').map((x) => x.trim());
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    const two = parts[i] && parts[i + 1] ? `${parts[i]}, ${parts[i + 1]}` : '';
+    if (two && places.has(two)) { out.push(two); i++; continue; }
+    out.push(parts[i]);
+  }
+  return out;
+}
+function parseLoc(area, zone) {
+  const as = splitPlaces(area);
+  const zs = splitPlaces(zone);
+  const n = Math.max(as.length, zs.length);
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    let a = as.length === zs.length || as.length > 1 ? as[i] || '' : as[0] || '';
+    let z = zs.length === as.length || zs.length > 1 ? zs[i] || '' : zs[0] || '';
+    if (glued(a)) a = '';
+    if (glued(z)) z = '';
+    if (a === z) a = '';
+    if (!a && !z) continue;
+    const key = `${a}|${z}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ a: a ? W.place(a) : null, z: z ? W.place(z) : null });
+  }
+  return out;
+}
 const vendorKey = (v) => slugify(vendorBase(v));
 let wikiTotal = 0;
 let wikiOk = 0;
@@ -166,7 +201,12 @@ for (const [k, w] of Object.entries(wiki.items)) {
       const c = W.cost(cost);
       const nt = W.note(notes);
       tally(c[2]); tally(nt[2]);
-      return { v: W.vendor(v), k: vendorKey(v), a: W.place(glued(area) ? '' : area), z: W.place(glued(zone) ? '' : zone), c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+      const base = vendorBase(v);
+      const loc = parseLoc(area, zone);
+      const row = { v: [base, base], k: vendorKey(v), l: loc, c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+      if (/\(vendor currently unavailable\)$/i.test(v)) row.off = 1;
+      if (/\(item currently unavailable\)$/i.test(v)) row.io = 1;
+      return row;
     });
   }
   for (const key of ['cont', 'gath']) {
@@ -388,11 +428,15 @@ fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
     for (const r of it.w?.sold || []) {
       if (!r.k) continue;
       let v = vendors.get(r.k);
-      if (!v) vendors.set(r.k, (v = { k: r.k, n: [r.v[0].replace(/ \(vendedor no disponible por ahora\)$/, ''), vendorBase(r.v[1])], off: 1, loc: new Map(), it: [], cur: new Set() }));
-      if (!/ \(vendor currently unavailable\)$/.test(r.v[1])) v.off = 0;
-      const lk = `${r.a?.[1] || ''}|${r.z?.[1] || ''}`;
-      if ((r.a?.[1] || r.z?.[1]) && !v.loc.has(lk)) v.loc.set(lk, { a: r.a, z: r.z, c: where(r.a?.[1], r.z?.[1]) });
-      v.it.push([it.id, r.c[0], r.c[1], r.n[0], r.n[1]]);
+      if (!v) vendors.set(r.k, (v = { k: r.k, n: r.v, off: 1, loc: new Map(), it: [], cur: new Set() }));
+      if (!r.off) v.off = 0;
+      for (const l of r.l || []) {
+        const lk = `${l.a?.[1] || ''}|${l.z?.[1] || ''}`;
+        if (!v.loc.has(lk)) v.loc.set(lk, { a: l.a, z: l.z, c: where(l.a?.[1], l.z?.[1]) });
+      }
+      const row = [it.id, r.c[0], r.c[1], r.n[0], r.n[1]];
+      if (r.io || r.off) row.push(1);
+      v.it.push(row);
       for (const c of curOf(r.c[1])) v.cur.add(c);
       vItems[it.id] = [it.n[0], it.n[1], it.r, it.ic];
     }
