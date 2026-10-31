@@ -11,7 +11,7 @@ const q = $('#mq');
 const resEl = $('#mres');
 const countEl = $('#mcount');
 const kinds = () => new Set([...document.querySelectorAll('input[name="mkind"]:checked')].map((i) => i.value));
-const KIND_LABEL = { map: lang === 'es' ? 'Mapa' : 'Map', wp: lang === 'es' ? 'Punto de ruta' : 'Waypoint', ev: lang === 'es' ? 'Evento' : 'Event' };
+const KIND_LABEL = { map: lang === 'es' ? 'Mapa' : 'Map', wp: lang === 'es' ? 'Punto de ruta' : 'Waypoint', ev: lang === 'es' ? 'Evento' : 'Event', dg: lang === 'es' ? 'Mazmorra' : 'Dungeon' };
 const valid = (s) => s && !/^[\s?¿]*$/.test(s);
 
 async function init() {
@@ -95,10 +95,14 @@ async function init() {
       add({ kind: 'ev', label: sg.n[li] || sg.n[1], alt: sg.n[1 - li], sub: ev.n[li], pos: sg.pos, chat: sg.wp });
     }
   } catch { /* events are optional on the map */ }
+  try {
+    const dg = await fetch(`${document.body.dataset.data}/dungeons.json`).then((r) => r.json());
+    for (const x of [...dg.dungeons, ...dg.other]) if (x.pos) add({ kind: 'dg', label: x.n[li] || x.n[1], alt: x.n[1 - li], sub: x.mapN?.[li], pos: x.pos, chat: x.chat });
+  } catch { /* dungeons are optional on the map */ }
 
   function go(e) {
     if (e.kind === 'map') map.fitBounds(L.latLngBounds(un(e.m.rect[0][0], e.m.rect[1][1]), un(e.m.rect[1][0], e.m.rect[0][1])));
-    else if (e.kind === 'ev') showPoint(e.pos, `${e.label} — ${e.sub}`, e.chat);
+    else if (e.kind === 'ev' || e.kind === 'dg') showPoint(e.pos, `${e.label} — ${e.sub}`, e.chat);
     else showPoint(e.w.c, e.label, e.w.chat);
     if (matchMedia('(max-width: 900px)').matches) el.scrollIntoView({ block: 'start' });
   }

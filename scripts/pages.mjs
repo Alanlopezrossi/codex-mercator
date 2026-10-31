@@ -66,6 +66,34 @@ ${noscript(lang)}
 <nav class="pager" id="gpager" aria-label="${esc(t(lang, 'page'))}"></nav>`;
 }
 
+function dungeons(lang, data) {
+  const li = LANGS.indexOf(lang);
+  const L = (p) => (p ? p[li] || p[1] : '');
+  const mapLink = (x) => (x.pos ? `${pagePath(lang, 'map')}#@${x.pos[0]},${x.pos[1]},${encodeURIComponent(L(x.n))}${x.chat ? `,${encodeURIComponent(x.chat)}` : ''}` : '');
+  const where = (x) => `<dl class="dg-facts">
+      <div><dt>${esc(t(lang, 'dg.where'))}</dt><dd>${esc(L(x.mapN))}</dd></div>
+      ${x.wpN ? `<div><dt>${esc(t(lang, 'dg.wp'))}</dt><dd>${esc(L(x.wpN))}</dd></div>` : ''}
+    </dl>
+    <div class="dg-actions">
+      ${x.chat ? `<button type="button" class="btn btn-small copy-btn" data-copy="${esc(x.chat)}" aria-label="${esc(t(lang, 'copy'))} ${esc(x.chat)}"><code>${esc(x.chat)}</code></button>` : ''}
+      ${mapLink(x) ? `<a class="btn btn-small" href="${esc(mapLink(x))}">📍 ${esc(t(lang, 'dg.onMap'))}</a>` : ''}
+    </div>`;
+  const cards = data.dungeons.map((x, i) => `<article class="card dg" id="${esc(x.id)}">
+    <header class="dg-head"><span class="dg-num" aria-hidden="true">${i + 1}</span><div><h2>${esc(L(x.n))}</h2>${lang === 'es' ? `<p class="small muted" lang="en">${esc(x.n[1])}</p>` : ''}</div></header>
+    <ul class="dg-tags"><li class="tag">${esc(t(lang, 'dg.story'))} · ${esc(t(lang, 'dg.level'))} ${x.lv[0]}</li><li class="tag">${esc(t(lang, 'dg.explorable'))} · ${esc(t(lang, 'dg.level'))} ${x.lv[1]}</li><li class="tag">${esc(t(lang, 'dg.players'))}</li></ul>
+    <p>${esc(L(x.d))}</p>
+    ${where(x)}
+    <p class="dg-sub">${esc(t(lang, 'dg.paths'))} <span class="count">${x.paths.length}</span></p>
+    <ol class="dg-paths">${x.paths.map((p) => `<li${lang === 'es' ? ' lang="en"' : ''}>${esc(p)}</li>`).join('')}</ol>
+  </article>`).join('');
+  const other = data.other.map((x) => `<article class="card dg dg-other" id="${esc(x.id)}"><h3>${esc(L(x.n))}</h3><p>${esc(L(x.d))}</p>${where(x)}</article>`).join('');
+  return `${head(lang, 'dg')}
+<div class="dg-grid">${cards}</div>
+<p class="notice small">${esc(t(lang, 'dg.reward'))} <a href="${pagePath(lang, 'vendors')}?q=${encodeURIComponent(lang === 'es' ? 'mazmorra' : 'dungeon')}">${esc(t(lang, 'dg.vendors'))} →</a></p>
+<section aria-labelledby="dg-other-h"><h2 id="dg-other-h" class="section-title">${esc(t(lang, 'dg.other'))}</h2><div class="dg-grid dg-grid-3">${other}</div></section>
+<p class="muted small">${lang === 'es' ? 'Ubicaciones y puntos de ruta: API oficial de Guild Wars 2.' : 'Locations and waypoints: official Guild Wars 2 API.'}</p>`;
+}
+
 function vendors(lang) {
   return `${head(lang, 'vendors', '<p class="muted small stamp" id="vstat" aria-live="polite"></p>')}
 <form class="filters card" id="vFilters" role="search" action="" method="get">
@@ -174,7 +202,7 @@ function map(lang) {
 <div class="map-layout">
   <aside class="card map-side" aria-label="${esc(t(lang, 'map.search'))}">
     <div class="field"><label for="mq">${esc(t(lang, 'map.search'))}</label><input id="mq" type="search" placeholder="${esc(es ? 'Ej: Arco del León, Tequatl…' : "E.g. Lion's Arch, Tequatl…")}" autocomplete="off" spellcheck="false"></div>
-    ${chips('mkind', es ? 'Mostrar' : 'Show', [{ v: 'map', label: es ? 'Mapas' : 'Maps', on: true }, { v: 'wp', label: es ? 'Puntos de ruta' : 'Waypoints', on: true }, { v: 'ev', label: es ? 'Eventos' : 'Events', on: true }], { type: 'checkbox' })}
+    ${chips('mkind', es ? 'Mostrar' : 'Show', [{ v: 'map', label: es ? 'Mapas' : 'Maps', on: true }, { v: 'wp', label: es ? 'Puntos de ruta' : 'Waypoints', on: true }, { v: 'ev', label: es ? 'Eventos' : 'Events', on: true }, { v: 'dg', label: es ? 'Mazmorras' : 'Dungeons', on: true }], { type: 'checkbox' })}
     <p class="small muted" id="mcount" aria-live="polite"></p>
     <ul class="map-results" id="mres"></ul>
   </aside>
@@ -338,7 +366,7 @@ function notFound(lang) {
   return `<section class="empty-state"><h1>${esc(t(lang, 'notfound.title'))}</h1><p class="lead">${esc(t(lang, 'notfound.lead'))}</p><p><a class="btn btn-primary" href="${pagePath(lang, 'home')}">${esc(t(lang, 'notfound.back'))}</a></p></section>`;
 }
 
-export function renderStaticPages(meta, { popular = [] } = {}) {
+export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] } } = {}) {
   const out = {};
   for (const lang of LANGS) {
     const base = { lang, meta };
@@ -354,6 +382,7 @@ export function renderStaticPages(meta, { popular = [] } = {}) {
     P('achievements', achievements(lang), { title: t(lang, 'ach.title'), description: t(lang, 'ach.lead'), scripts: ['achievements'] });
     P('professions', professions(lang), { title: t(lang, 'prof.title'), description: t(lang, 'prof.lead'), scripts: ['professions'] });
     P('gear', gear(lang), { title: t(lang, 'gear.title'), description: t(lang, 'gear.lead'), scripts: ['gear'] });
+    P('dungeons', dungeons(lang, dgData), { title: t(lang, 'dg.title'), description: t(lang, 'dg.lead') });
     P('vendors', vendors(lang), { title: t(lang, 'vendors.title'), description: t(lang, 'vendors.lead'), scripts: ['vendors'] });
     P('map', map(lang), { title: t(lang, 'map.title'), description: t(lang, 'map.lead'), scripts: ['map'], styles: ['map'], ads: false });
     P('calculator', calculator(lang), { title: t(lang, 'calc.title'), description: t(lang, 'calc.lead'), scripts: ['calculator'] });

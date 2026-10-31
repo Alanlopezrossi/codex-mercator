@@ -1,0 +1,37 @@
+{
+  "source": "Curated by Bazaar Ledger (game facts; descriptions written for this site). Locations are resolved at build time from the official API waypoints.",
+  "dungeons": [
+    { "id": "ascalonian_catacombs", "n": ["Catacumbas Ascalonianas", "Ascalonian Catacombs"], "map": "Plains of Ashford", "wp": "Ascalonian Catacombs Waypoint", "lv": [30, 35],
+      "d": ["Los fantasmas de la antigua Ascalon siguen librando su guerra en las catacumbas bajo la ciudad en ruinas.", "The ghosts of old Ascalon still fight their war in the catacombs under the ruined city."],
+      "paths": ["Hodgins", "Detha", "Tzark"] },
+    { "id": "caudecus_manor", "n": ["Mansión de Caudecus", "Caudecus's Manor"], "map": "Queensdale", "wp": "Beetletun Waypoint", "lv": [40, 45],
+      "d": ["La finca del ministro Caudecus en Valle de la Reina, tomada por bandidos y separatistas.", "Minister Caudecus's estate in Queensdale, overrun by bandits and separatists."],
+      "paths": ["Asura", "Seraph", "Butler"] },
+    { "id": "twilight_arbor", "n": ["Pérgola del Crepúsculo", "Twilight Arbor"], "map": "Caledon Forest", "wp": "Twilight Arbor Waypoint", "lv": [50, 55],
+      "d": ["Un bosque retorcido del Bosque de Caledon donde la Corte de la Pesadilla esconde sus planes.", "A twisted grove in Caledon Forest where the Nightmare Court hides its plans."],
+      "paths": ["Leurent (Up)", "Vevina (Forward)", "Aetherpath"] },
+    { "id": "sorrows_embrace", "n": ["Abrazo del Pesar", "Sorrow's Embrace"], "map": "Dredgehaunt Cliffs", "wp": "Sorrow's Embrace Waypoint", "lv": [60, 65],
+      "d": ["Una fortaleza minera de los dredge bajo los Acantilados de Guaridadraga, llena de máquinas y lava.", "A dredge mining fortress under Dredgehaunt Cliffs, full of machines and lava."],
+      "paths": ["Fergg", "Rasalov", "Koptev"] },
+    { "id": "citadel_of_flame", "n": ["Ciudadela de la Llama", "Citadel of Flame"], "map": "Fireheart Rise", "wp": "The Citadel of Flame Waypoint", "lv": [70, 75],
+      "d": ["El bastión de la Legión de la Llama en la Colina del Corazón de Fuego, con sus chamanes y sus rituales.", "The Flame Legion stronghold in Fireheart Rise, with its shamans and rituals."],
+      "paths": ["Ferrah", "Magg", "Rhiannon"] },
+    { "id": "honor_of_the_waves", "n": ["Honor de las Olas", "Honor of the Waves"], "map": "Frostgorge Sound", "wp": "Honor of the Waves Waypoint", "lv": [76, 80],
+      "d": ["El santuario de hielo de los kodan en el Estrecho de Gorjaescarcha, atacado por las fuerzas de Jormag.", "The kodan ice sanctuary in Frostgorge Sound, under attack by Jormag's forces."],
+      "paths": ["Butcher", "Plunderer", "Zealot"] },
+    { "id": "crucible_of_eternity", "n": ["Crisol de la Eternidad", "Crucible of Eternity"], "map": "Mount Maelstrom", "wp": "Crucible of Eternity Waypoint", "lv": [78, 80],
+      "d": ["El laboratorio secreto de la Inquisición en Monte Vorágine, con golems y experimentos peligrosos.", "The Inquest's secret laboratory in Mount Maelstrom, with golems and dangerous experiments."],
+      "paths": ["Submarine", "Teleporter", "Front Door"] },
+    { "id": "ruined_city_of_arah", "n": ["Ciudad en Ruinas de Arah", "The Ruined City of Arah"], "map": "Cursed Shore", "wp": "Arah Waypoint", "lv": [80, 80],
+      "d": ["La antigua capital humana de Orr, hundida y resucitada: la guarida del dragón Zhaitan.", "The old human capital of Orr, sunk and risen again: the lair of the dragon Zhaitan."],
+      "paths": ["Jotun", "Mursaat", "Forgotten", "Seer"] }
+  ],
+  "other": [
+    { "id": "fractals", "n": ["Fractales de la Niebla", "Fractals of the Mists"], "map": "Lion's Arch", "wp": "",
+      "d": ["Mazmorras cortas con dificultad escalable (niveles 1 a 100). Se entra desde el portal de Arco del León.", "Short dungeons with scaling difficulty (tiers 1 to 100). Entered from the portal in Lion's Arch."] },
+    { "id": "raids", "n": ["Incursiones", "Raids"], "map": "Lion's Arch Aerodrome", "wp": "Aerodrome Waypoint",
+      "d": ["Contenido para 10 jugadores. Los portales a todas las alas están en el Aeródromo de Arco del León.", "10-player content. Portals to every wing are in the Lion's Arch Aerodrome."] },
+    { "id": "strikes", "n": ["Misiones de ataque", "Strike Missions"], "map": "Eye of the North", "wp": "Eye of the North Waypoint",
+      "d": ["Jefes para 10 jugadores, más cortos que las incursiones. Se accede desde el Ojo del Norte y el Aeródromo.", "10-player boss fights, shorter than raids. Accessed from Eye of the North and the Aerodrome."] }
+  ]
+}

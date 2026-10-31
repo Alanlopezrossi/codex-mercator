@@ -547,7 +547,22 @@ console.log(`[build] monetization: ads ${mon.adClient ? (mon.adSlot ? 'on (with 
 const POPULAR = [19721, 19976, 19675, 24295, 19685, 24277, 30689, 46731];
 const popular = POPULAR.map((id) => items.get(id)).filter(Boolean).map((o) => ({ id: o.id, n: o.n, ic: o.ic, r: o.r }));
 const CONTACT = process.env.CONTACT_EMAIL || 'contact@bazaarledger.com';
-const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
+// Dungeons and other instances: entrance coordinates and names from the official waypoints and maps.
+const dungeonData = (() => {
+  const d = readData('dungeons.json');
+  const wpByEn = new Map(geo.wps.map((w) => [w.n[1], w]));
+  const mapByEn = new Map(geo.maps.map((m) => [m.n[1], m]));
+  const fix = (x) => {
+    const w = x.wp ? wpByEn.get(x.wp) : null;
+    const m = mapByEn.get(x.map);
+    const pos = w ? w.c : m?.rect ? [Math.round((m.rect[0][0] + m.rect[1][0]) / 2), Math.round((m.rect[0][1] + m.rect[1][1]) / 2)] : null;
+    if (x.wp && !w) console.warn(`[build] dungeons: waypoint not found: ${x.wp}`);
+    return { ...x, mapN: m ? m.n : [x.map, x.map], wpN: w ? w.n : null, chat: w?.chat || '', pos };
+  };
+  return { dungeons: d.dungeons.map(fix), other: d.other.map(fix) };
+})();
+fs.writeFileSync(path.join(DATA, 'dungeons.json'), JSON.stringify(dungeonData));
+const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');
   const file = p.endsWith('/') ? f : `${f}.html`;
