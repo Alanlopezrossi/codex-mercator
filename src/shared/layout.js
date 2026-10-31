@@ -2,7 +2,7 @@
 import { esc } from './format.js';
 import { LANGS, ROUTES, SITE_NAME, pagePath, t } from './i18n.js';
 
-const NAV = ['events', 'bazaar', 'items', 'gear', 'achievements', 'professions', 'map', 'calculator'];
+const NAV = ['events', 'bazaar', 'items', 'gear', 'vendors', 'achievements', 'professions', 'map', 'calculator'];
 
 const ICONS = {
   search: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',

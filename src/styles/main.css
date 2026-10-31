@@ -548,3 +548,17 @@ a.evt-name { color: inherit; text-decoration: underline; text-decoration-color: 
 .ach-guide { margin-top: 8px; }
 .ach-guide summary { cursor: pointer; font-weight: 600; color: var(--link); }
 .ach-guide p { white-space: pre-line; font-size: var(--fs-sm); margin: 8px 0 0; }
+
+/* ---------- Vendors (NPCs) ---------- */
+.vendor-list { display: grid; gap: var(--gap); margin-bottom: 16px; }
+@media (min-width: 900px) { .vendor-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+.vendor { margin: 0; min-width: 0; }
+.vendor-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.vendor-head h2 { margin: 0; font-size: var(--fs-lg); overflow-wrap: anywhere; }
+.vendor-sub { margin: 8px 0 2px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.v-where { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.v-sells > summary { cursor: pointer; font-weight: 600; color: var(--accent-2); padding: 6px 0; }
+.v-items { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; max-height: 520px; overflow: auto; }
+.v-item { min-width: 0; }
+.v-item .ref { width: 100%; }
+.v-note { margin: 2px 0 0 44px; }

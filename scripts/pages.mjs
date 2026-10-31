@@ -66,6 +66,23 @@ ${noscript(lang)}
 <nav class="pager" id="gpager" aria-label="${esc(t(lang, 'page'))}"></nav>`;
 }
 
+function vendors(lang) {
+  return `${head(lang, 'vendors', '<p class="muted small stamp" id="vstat" aria-live="polite"></p>')}
+<form class="filters card" id="vFilters" role="search" action="" method="get">
+  <div class="filter-top">
+    <div class="field grow"><label for="vq">${esc(t(lang, 'vendors.search'))}</label><input id="vq" name="q" type="search" placeholder="${esc(t(lang, 'vendors.searchPh'))}" autocomplete="off" spellcheck="false"></div>
+    <div class="field check"><input id="voff" name="off" type="checkbox" value="1"><label for="voff">${esc(t(lang, 'vendors.showOff'))}</label></div>
+    <div class="field actions"><button class="btn" type="reset">${esc(t(lang, 'clear'))}</button></div>
+  </div>
+  <div id="vcur">${chips('vc', t(lang, 'vendors.currency'), [], { all: t(lang, 'all') })}</div>
+</form>
+${noscript(lang)}
+<p class="result-count muted" id="vcount" aria-live="polite"></p>
+<div class="vendor-list" id="vlist"></div>
+<nav class="pager" id="vpager" aria-label="${esc(t(lang, 'page'))}"></nav>
+<p class="muted small">${esc(t(lang, 'vendors.source'))} <a href="${pagePath(lang, 'legal')}#licencias">${esc(t(lang, 'nav.legal'))}</a></p>`;
+}
+
 function bazaar(lang) {
   const col = (k, label, cls = 'num') => `<th scope="col" class="${cls}" aria-sort="none"><button type="button" class="sort" data-sort="${k}">${esc(label)}</button></th>`;
   return `${head(lang, 'bazaar', '<p class="muted small stamp" id="bstamp" aria-live="polite"></p>')}
@@ -323,6 +340,7 @@ export function renderStaticPages(meta, { popular = [] } = {}) {
     P('achievements', achievements(lang), { title: t(lang, 'ach.title'), description: t(lang, 'ach.lead'), scripts: ['achievements'] });
     P('professions', professions(lang), { title: t(lang, 'prof.title'), description: t(lang, 'prof.lead'), scripts: ['professions'] });
     P('gear', gear(lang), { title: t(lang, 'gear.title'), description: t(lang, 'gear.lead'), scripts: ['gear'] });
+    P('vendors', vendors(lang), { title: t(lang, 'vendors.title'), description: t(lang, 'vendors.lead'), scripts: ['vendors'] });
     P('map', map(lang), { title: t(lang, 'map.title'), description: t(lang, 'map.lead'), scripts: ['map'], styles: ['map'] });
     P('calculator', calculator(lang), { title: t(lang, 'calc.title'), description: t(lang, 'calc.lead'), scripts: ['calculator'] });
     P('favorites', favorites(lang), { title: t(lang, 'fav.title'), description: t(lang, 'fav.lead'), scripts: ['home'], noindex: true });

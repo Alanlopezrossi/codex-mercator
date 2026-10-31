@@ -162,7 +162,7 @@ function acquisitionHtml(lang, it) {
       // Rows whose cost or note could not be translated keep the English text, marked as such.
       const raw = isEs && r.en ? ' lang="en"' : '';
       const where = [r.a?.[li], r.z?.[li]].filter(Boolean).join(', ');
-      return `<tr><td class="left">${esc(r.v[li])}</td><td class="left">${esc(where)}</td><td class="left"${raw}>${esc(r.c[li])}</td><td class="left small muted"${raw}>${esc(r.n[li])}</td></tr>`;
+      return `<tr><td class="left">${r.k ? `<a href="${pagePath(lang, 'vendors')}#v=${esc(r.k)}">${esc(r.v[li])}</a>` : esc(r.v[li])}</td><td class="left">${esc(where)}</td><td class="left"${raw}>${esc(r.c[li])}</td><td class="left small muted"${raw}>${esc(r.n[li])}</td></tr>`;
     }).join('');
     html += `<h3 class="h-sub">${esc(t(lang, 'item.soldBy'))}</h3><div class="table-wrap" tabindex="0" role="region" aria-label="${esc(t(lang, 'item.soldBy'))}"><table class="data-table compact"><thead><tr>${head.map((h) => `<th scope="col" class="left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }

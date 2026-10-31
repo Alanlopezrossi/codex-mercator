@@ -140,6 +140,9 @@ for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
 }
 const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
 const W = makeTranslator({ items, currencies: names.currencies, places, achievements });
+// Vendors (NPCs) are keyed by their English name without the "(vendor currently unavailable)" suffix.
+const vendorBase = (v) => String(v || '').replace(/ \(vendor currently unavailable\)$/, '').trim();
+const vendorKey = (v) => slugify(vendorBase(v));
 let wikiTotal = 0;
 let wikiOk = 0;
 const tally = (ok) => { wikiTotal++; if (ok) wikiOk++; return ok; };
@@ -163,7 +166,7 @@ for (const [k, w] of Object.entries(wiki.items)) {
       const c = W.cost(cost);
       const nt = W.note(notes);
       tally(c[2]); tally(nt[2]);
-      return { v: W.vendor(v), a: W.place(glued(area) ? '' : area), z: W.place(glued(zone) ? '' : zone), c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+      return { v: W.vendor(v), k: vendorKey(v), a: W.place(glued(area) ? '' : area), z: W.place(glued(zone) ? '' : zone), c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
     });
   }
   for (const key of ['cont', 'gath']) {
@@ -353,6 +356,57 @@ function compactFloor() {
 }
 const geo = compactFloor();
 fs.writeFileSync(path.join(DATA, 'geo.json'), JSON.stringify(geo));
+
+// ---------- 6b. Vendors (NPCs): who sells what and where, from the wiki "sold by" tables ----------
+{
+  // Place name (English) -> coordinates on the continent map: points of interest, sectors and maps.
+  const coordOf = new Map();
+  const mapCenter = new Map();
+  for (const reg of Object.values(floorEn.regions || {})) {
+    for (const m of Object.values(reg.maps || {})) {
+      const r = m.continent_rect;
+      if (r && m.name && !mapCenter.has(m.name)) mapCenter.set(m.name, [Math.round((r[0][0] + r[1][0]) / 2), Math.round((r[0][1] + r[1][1]) / 2)]);
+      for (const sc of Object.values(m.sectors || {})) if (sc.name && sc.coord && !coordOf.has(`${m.name}|${sc.name}`)) coordOf.set(`${m.name}|${sc.name}`, sc.coord.map(Math.round));
+      for (const p of Object.values(m.points_of_interest || {})) if (p.name && p.coord && !coordOf.has(`${m.name}|${p.name}`)) coordOf.set(`${m.name}|${p.name}`, p.coord.map(Math.round));
+    }
+  }
+  const byName = new Map();
+  for (const [k, c] of coordOf) { const n = k.split('|')[1]; if (!byName.has(n)) byName.set(n, c); }
+  const where = (a, z) => coordOf.get(`${z}|${a}`) || (a && byName.get(a)) || mapCenter.get(z) || (a && mapCenter.get(a)) || null;
+  // Currencies (by English name, longest first) to filter vendors by what they take.
+  const curList = [...names.currencies].sort((x, y) => y.en.length - x.en.length);
+  const curOf = (cost) => {
+    const ids = new Set();
+    let rest = ` ${cost || ''} `;
+    if (/\b(Gold|Silver|Copper) coin\b/i.test(rest)) { ids.add(1); rest = rest.replace(/\b(Gold|Silver|Copper) coin\b/gi, ' '); }
+    for (const c of curList) if (c.en && rest.includes(c.en)) { ids.add(c.id); rest = rest.split(c.en).join(' '); }
+    return [...ids];
+  };
+  const vendors = new Map();
+  const vItems = {};
+  for (const it of items.values()) {
+    for (const r of it.w?.sold || []) {
+      if (!r.k) continue;
+      let v = vendors.get(r.k);
+      if (!v) vendors.set(r.k, (v = { k: r.k, n: [r.v[0].replace(/ \(vendedor no disponible por ahora\)$/, ''), vendorBase(r.v[1])], off: 1, loc: new Map(), it: [], cur: new Set() }));
+      if (!/ \(vendor currently unavailable\)$/.test(r.v[1])) v.off = 0;
+      const lk = `${r.a?.[1] || ''}|${r.z?.[1] || ''}`;
+      if ((r.a?.[1] || r.z?.[1]) && !v.loc.has(lk)) v.loc.set(lk, { a: r.a, z: r.z, c: where(r.a?.[1], r.z?.[1]) });
+      v.it.push([it.id, r.c[0], r.c[1], r.n[0], r.n[1]]);
+      for (const c of curOf(r.c[1])) v.cur.add(c);
+      vItems[it.id] = [it.n[0], it.n[1], it.r, it.ic];
+    }
+  }
+  const curNames = Object.fromEntries(names.currencies.map((c) => [c.id, [c.es, c.en]]));
+  curNames[1] ||= ['Moneda', 'Coin'];
+  const list = [...vendors.values()].map((v) => ({ k: v.k, n: v.n, off: v.off, loc: [...v.loc.values()], it: v.it, cur: [...v.cur] }))
+    .sort((a, b) => a.off - b.off || b.it.length - a.it.length || a.n[1].localeCompare(b.n[1]));
+  const curCount = new Map();
+  for (const v of list) for (const c of v.cur) curCount.set(c, (curCount.get(c) || 0) + 1);
+  const topCur = [...curCount.entries()].filter(([id]) => curNames[id]).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([id]) => [id, ...curNames[id]]);
+  fs.writeFileSync(path.join(DATA, 'vendors.json'), JSON.stringify({ vendors: list, items: vItems, cur: topCur }));
+  console.log(`[build] vendors: ${list.length} NPCs, ${list.reduce((s2, v) => s2 + v.it.length, 0)} offers, ${list.filter((v) => v.loc.some((l) => l.c)).length} with a map location`);
+}
 
 // ---------- 7. Events ----------
 // Names: data/event-names.json (curated, game names) and, for maps, the official API.
