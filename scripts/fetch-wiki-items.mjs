@@ -79,11 +79,13 @@ await Promise.all(Array.from({ length: CONC }, async () => {
     const acq = $('h2').filter((_, el) => /^Acquisition/i.test(clean($(el).text()))).first();
     if (!acq.length) { why.noAcq++; if (examples.length < 6) examples.push(['noAcq', name, $('h2').map((_, e) => clean($(e).text())).get().slice(0, 8)]); continue; }
     const rec = { title: name };
-    let key = null;
+    // Pages without sub-headings put the vendor table or the list of sources right under the heading.
+    let key = 'auto';
     for (let el = acq.next(); el.length && !el.is('h2'); el = el.next()) {
       if (el.is('h3, h4')) { key = KEY(clean(el.text()).replace(/\[edit\]/, '')); continue; }
       if (!key) continue;
-      if (key === 'sold') {
+      const k = key === 'auto' ? (el.is('table') || el.find('table').length ? 'sold' : 'how') : key;
+      if (k === 'sold') {
         el.find('table').addBack('table').each((_, t) => {
           const head = $(t).find('tr').first().children().map((__, c) => clean($(c).text())).get();
           const col = (n) => head.findIndex((x) => x.toLowerCase().startsWith(n));
@@ -99,8 +101,8 @@ await Promise.all(Array.from({ length: CONC }, async () => {
         el.find('li').addBack('li').each((_, li) => {
           const txt = clean($(li).clone().children('ul').remove().end().text());
           if (!txt || txt.length > 160) return;
-          if (key === 'cont' || key === 'gath') (rec[key] ||= []).push(txt);
-          else (rec.src ||= []).push([key, txt]);
+          if (k === 'cont' || k === 'gath') (rec[k] ||= []).push(txt);
+          else (rec.src ||= []).push([k, txt]);
         });
       }
     }

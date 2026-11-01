@@ -179,8 +179,8 @@ function acquisitionHtml(lang, it) {
   }).join('')}</ul>`;
   if (cont.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(cont, 'chest')}`;
   if (gath.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(gath, 'node')}`;
-  const SRC_HEAD = { drop: isEs ? 'Lo sueltan' : 'Dropped by', rew: isEs ? 'Recompensa de' : 'Rewarded by', salv: isEs ? 'Se obtiene reciclando' : 'Salvaged from' };
-  for (const k of ['drop', 'rew', 'salv']) {
+  const SRC_HEAD = { drop: isEs ? 'Lo sueltan' : 'Dropped by', rew: isEs ? 'Recompensa de' : 'Rewarded by', salv: isEs ? 'Se obtiene reciclando' : 'Salvaged from', how: isEs ? 'Otras formas de conseguirlo' : 'Other sources' };
+  for (const k of ['drop', 'rew', 'salv', 'how']) {
     const list = src.filter((e) => e.k === k);
     if (list.length) html += `<h3 class="h-sub">${esc(SRC_HEAD[k])}</h3>${entries(list, k === 'salv' ? 'chest' : 'node')}`;
   }
