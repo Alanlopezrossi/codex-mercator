@@ -118,6 +118,28 @@ ${instTabs(lang, 'dungeons')}
 <p class="muted small">${lang === 'es' ? 'Ubicaciones y puntos de ruta: API oficial de Guild Wars 2.' : 'Locations and waypoints: official Guild Wars 2 API.'}</p>`;
 }
 
+function support(lang, meta, supporters) {
+  const es = lang === 'es';
+  const m = meta.mon || {};
+  const btns = [];
+  if (m.cafecito) btns.push(`<a class="btn btn-primary btn-lg" href="${esc(m.cafecito)}" rel="noopener" target="_blank">☕ ${es ? 'Invitame un cafecito' : 'Buy me a cafecito'}</a>`);
+  if (m.donate) btns.push(`<a class="btn btn-lg" href="${esc(m.donate)}" rel="noopener" target="_blank">💛 ${es ? 'Donar desde el exterior' : 'Donate'}</a>`);
+  const how = btns.length
+    ? `<div class="sup-btns">${btns.join('')}</div><p class="small muted">${es ? 'Cafecito acepta tarjetas, Mercado Pago y transferencias en pesos. Desde otros países podés usar el segundo botón.' : 'Cafecito is for payments from Argentina; from other countries use the other button.'}</p>`
+    : `<p class="notice">${es ? 'Muy pronto vas a poder apoyar el sitio con Cafecito (pagos en pesos con tarjeta o Mercado Pago) y con donaciones desde el exterior.' : 'Very soon you will be able to support the site with Cafecito and international donations.'}</p>`;
+  const list = supporters.length
+    ? `<ul class="sup-wall">${supporters.map((s) => `<li><span aria-hidden="true">☕</span> ${esc(s.name)}</li>`).join('')}</ul>`
+    : `<p class="muted">${es ? 'Todavía no hay nadie en el muro. ¡Podés ser la primera persona!' : 'Nobody on the wall yet. You can be the first!'}</p>`;
+  return `${head(lang, 'sup')}
+<div class="sup-grid">
+  <section class="card sup-main" aria-labelledby="sup-h"><h2 id="sup-h">${es ? 'Cómo apoyar' : 'How to support'}</h2>${how}</section>
+  <section class="card" aria-labelledby="sup-why"><h2 id="sup-why">${es ? 'A qué va tu aporte' : 'Where it goes'}</h2>
+    <ul class="check-list"><li>${es ? 'El dominio y los servicios para que el sitio esté siempre en línea.' : 'The domain and services that keep the site online.'}</li><li>${es ? 'Nuevas funciones: historial de precios, crafteo rentable, planificador de legendarias.' : 'New features: price history, profitable crafting, legendary planner.'}</li><li>${es ? 'Mantener los datos al día con cada parche del juego.' : 'Keeping the data up to date with every game patch.'}</li></ul>
+    <p class="small muted">${es ? 'Apoyar no desbloquea contenido: todo sigue siendo gratis y para todos, como piden las reglas de ArenaNet para sitios de fans.' : 'Supporting does not unlock content: everything stays free for everyone, as ArenaNet asks of fansites.'}</p></section>
+</div>
+<section class="card" aria-labelledby="sup-wall-h"><h2 id="sup-wall-h">${es ? 'Muro de agradecimientos' : 'Thank-you wall'}</h2><p class="small muted">${es ? 'Gracias a quienes ayudan a que Bazaar Ledger siga creciendo. Si donaste y querés aparecer, dejá tu nick en el mensaje del cafecito.' : 'Thanks to everyone who helps Bazaar Ledger keep growing. If you donated and want to appear, leave your nickname in the message.'}</p>${list}</section>`;
+}
+
 function compare(lang) {
   return `${head(lang, 'cmp')}
 ${noscript(lang)}
@@ -387,8 +409,8 @@ ${adsEn}
 
 function about(lang, meta) {
   const m = meta.mon || {};
-  const supEs = `<h2>Cómo se sostiene</h2><p>El sitio es y va a seguir siendo gratis${m.adClient ? ', y se paga con unos pocos anuncios que no tapan el contenido' : ''}.${m.donate ? ` Si te sirve, podés <a href="${esc(m.donate)}" rel="noopener" target="_blank">apoyarlo con una donación</a>; no desbloquea contenido, todo sigue siendo para todos.` : ''}${m.affiliate ? ` Si vas a comprar el juego o una expansión, hacerlo desde <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">nuestro enlace de afiliado</a> también ayuda, sin costo extra para vos.` : ''}</p>`;
-  const supEn = `<h2>How it is funded</h2><p>The site is and will stay free${m.adClient ? ', paid for by a few ads that never cover the content' : ''}.${m.donate ? ` If it helps you, you can <a href="${esc(m.donate)}" rel="noopener" target="_blank">support it with a donation</a>; it does not unlock anything, everything stays available to everyone.` : ''}${m.affiliate ? ` If you are buying the game or an expansion, using <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">our affiliate link</a> also helps, at no extra cost to you.` : ''}</p>`;
+  const supEs = `<h2>Cómo se sostiene</h2><p>El sitio es y va a seguir siendo gratis${m.adClient ? ', y se paga con unos pocos anuncios que no tapan el contenido' : ''}. Si te sirve, podés <a href="${pagePath('es', 'support')}">apoyarlo con un cafecito</a>; no desbloquea contenido, todo sigue siendo para todos.${m.affiliate ? ` Si vas a comprar el juego o una expansión, hacerlo desde <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">nuestro enlace de afiliado</a> también ayuda, sin costo extra para vos.` : ''}</p>`;
+  const supEn = `<h2>How it is funded</h2><p>The site is and will stay free${m.adClient ? ', paid for by a few ads that never cover the content' : ''}. If it helps you, you can <a href="${pagePath('en', 'support')}">support it</a>; it does not unlock anything, everything stays available to everyone.${m.affiliate ? ` If you are buying the game or an expansion, using <a href="${esc(m.affiliate)}" rel="sponsored noopener" target="_blank">our affiliate link</a> also helps, at no extra cost to you.` : ''}</p>`;
   return prose(lang, 'about.title', `
 <p>Bazaar Ledger es una base de datos de Guild Wars 2 hecha por y para la comunidad: todos los ítems del juego, sus recetas, la Forja Mística y el bazar en vivo, en español y en inglés.</p>
 <h2>Cómo funciona</h2>
@@ -410,7 +432,7 @@ function notFound(lang) {
   return `<section class="empty-state"><h1>${esc(t(lang, 'notfound.title'))}</h1><p class="lead">${esc(t(lang, 'notfound.lead'))}</p><p><a class="btn btn-primary" href="${pagePath(lang, 'home')}">${esc(t(lang, 'notfound.back'))}</a></p></section>`;
 }
 
-export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] }, instances: frData = { strikes: [], fractals: null } } = {}) {
+export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] }, instances: frData = { strikes: [], fractals: null }, supporters = [] } = {}) {
   const out = {};
   for (const lang of LANGS) {
     const base = { lang, meta };
@@ -426,6 +448,7 @@ export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dun
     P('achievements', achievements(lang), { title: t(lang, 'ach.title'), description: t(lang, 'ach.lead'), scripts: ['achievements'] });
     P('professions', professions(lang), { title: t(lang, 'prof.title'), description: t(lang, 'prof.lead'), scripts: ['professions'] });
     P('gear', gear(lang), { title: t(lang, 'gear.title'), description: t(lang, 'gear.lead'), scripts: ['gear'] });
+    P('support', support(lang, meta, supporters), { title: t(lang, 'sup.title'), description: t(lang, 'sup.lead'), ads: false });
     P('compare', compare(lang), { title: t(lang, 'cmp.title'), description: t(lang, 'cmp.lead'), scripts: ['compare'] });
     P('instances', instances(lang, frData), { title: t(lang, 'fr.title'), description: t(lang, 'fr.lead'), scripts: ['instances'] });
     P('dungeons', dungeons(lang, dgData), { title: t(lang, 'dg.title'), description: t(lang, 'dg.lead') });

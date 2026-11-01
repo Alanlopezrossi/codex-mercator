@@ -66,7 +66,7 @@ ${hreflang}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.webmanifest">
+${meta.app ? '<link rel="manifest" href="/manifest.webmanifest">' : ''}
 <link rel="preload" href="${A}/fonts/cinzel-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://api.guildwars2.com" crossorigin>
 <link rel="preconnect" href="https://render.guildwars2.com">
@@ -78,7 +78,7 @@ ${(o.styles || []).map((s) => `<link rel="stylesheet" href="${A}/${s}.css">`).jo
 ${monetizationHead(meta.mon)}
 ${ld}
 </head>
-<body data-lang="${lang}" data-page="${esc(o.page || '')}" data-assets="${A}" data-data="/data/${meta.dataVersion}" data-search="${esc(meta.searchFile || '')}" data-built="${esc(meta.builtAt)}">
+<body data-app="${meta.app ? 1 : 0}" data-lang="${lang}" data-page="${esc(o.page || '')}" data-assets="${A}" data-data="/data/${meta.dataVersion}" data-search="${esc(meta.searchFile || '')}" data-built="${esc(meta.builtAt)}">
 <a class="skip" href="#main">${esc(t(lang, 'skip'))}</a>
 <header class="site-header">
   <div class="wrap header-row">
@@ -91,6 +91,7 @@ ${ld}
     </form>
     <div class="header-tools">
       <a class="lang-link" href="${esc(o.alternates[other])}" hreflang="${other}" lang="${other}" aria-label="${esc(t(lang, 'otherLang'))}"><span class="lang-long">${esc(t(lang, 'otherLang'))}</span><span class="lang-short">${other.toUpperCase()}</span></a>
+      <a class="support-btn" href="${pagePath(lang, 'support')}" title="${esc(t(lang, 'nav.support'))}"><span aria-hidden="true">☕</span><span class="support-txt">${lang === 'es' ? 'Apoyar' : 'Support'}</span></a>
       <details class="a11y-menu js-only">
         <summary class="icon-btn" aria-label="${esc(t(lang, 'a11y.title'))}" title="${esc(t(lang, 'a11y.title'))}"><span aria-hidden="true" class="a11y-aa">Aa</span></summary>
         <div class="a11y-pop" role="group" aria-label="${esc(t(lang, 'a11y.title'))}">

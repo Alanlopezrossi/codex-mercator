@@ -99,7 +99,7 @@ function card(v) {
   const more = v.loc.length > 1 ? ` · +${v.loc.length - 1}` : '';
   return `<details class="vendor" id="v-${esc(v.k)}" data-k="${esc(v.k)}"${open ? ' open' : ''}>
     <summary class="v-sum">
-      <span class="v-title"><span class="v-name">${esc(name)}</span>${v.off ? `<span class="tag tag-small">${esc(t('vendors.off'))}</span>` : ''}</span>
+      <span class="v-title"><span class="v-name">${esc(name)}</span>${v.heart ? `<span class="tag tag-small tag-heart">❤ ${lang === 'es' ? 'Corazón de renombre' : 'Renown heart'}</span>` : ''}${v.off ? `<span class="tag tag-small">${esc(t('vendors.off'))}</span>` : ''}</span>
       <span class="v-meta"><span class="v-where-short">${esc(first)}${esc(more)}</span></span>
       <span class="v-count"><b>${num(only?.size || v.it.length, lang)}</b> ${esc(t('vendors.items'))}</span>
     </summary>

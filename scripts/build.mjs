@@ -141,6 +141,8 @@ for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
 }
 const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
 const W = makeTranslator({ items, currencies: names.currencies, places, achievements });
+// Spanish NPC names (as in the game).
+const NPC_ES = fs.existsSync(path.join(ROOT, 'data/npc-names-es.json')) ? readData('npc-names-es.json').names : {};
 // Vendors (NPCs) are keyed by their English name without the "(vendor currently unavailable)" suffix.
 const vendorBase = (v) => String(v || '').replace(/\s*\((vendor|item) currently unavailable\)$/i, '').trim();
 // Places the official API does not name (game modes, hubs): Spanish names as shown in the game.
@@ -204,7 +206,7 @@ for (const [k, w] of Object.entries(wiki.items)) {
       tally(c[2]); tally(nt[2]);
       const base = vendorBase(v);
       const loc = parseLoc(area, zone);
-      const row = { v: [base, base], k: vendorKey(v), l: loc, c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+      const row = { v: [NPC_ES[base] || base, base], k: vendorKey(v), l: loc, c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
       if (/\(vendor currently unavailable\)$/i.test(v)) row.off = 1;
       if (/\(item currently unavailable\)$/i.test(v)) row.io = 1;
       return row;
@@ -217,6 +219,33 @@ for (const [k, w] of Object.entries(wiki.items)) {
   it.w = ww;
 }
 console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
+// Renown heart vendors (karma and local currencies), extracted once from the archived wiki (data/heart-vendors.json).
+{
+  const hv = fs.existsSync(path.join(ROOT, 'data/heart-vendors.json')) ? readData('heart-vendors.json').npcs : [];
+  const findItem = (name) => {
+    const tries = [name, name.replace(/#.*$/, ''), name.replace(/\s*\([^)]*\)\s*$/, ''), name.replace(/#.*$/, '').replace(/\s*\([^)]*\)\s*$/, '')];
+    for (const x of tries) { const f = W.itemByEn.get(x); if (f) return f.id; }
+    return 0;
+  };
+  let added = 0;
+  let missed = 0;
+  for (const n of hv) {
+    const loc = parseLoc(n.a, n.z);
+    for (const [name, amounts, curs] of n.it) {
+      const id = findItem(name);
+      const it = id && items.get(id);
+      if (!it) { missed++; continue; }
+      const a = String(amounts || '').split(' ').filter(Boolean);
+      const c = String(curs || '').split('+').filter(Boolean);
+      const raw = a.length && a.length === c.length ? a.map((x, i) => `${x} ${c[i]}`).join(' + ') : (a.length && c.length === 1 ? `${a.join('')} ${c[0]}` : '');
+      const cc = raw ? W.cost(raw) : ['', '', true];
+      const w = (it.w ||= { title: it.n[1] });
+      (w.sold ||= []).push({ v: [NPC_ES[n.en] || n.es || n.en, n.en], k: vendorKey(n.en), l: loc, c: [cc[0], cc[1]], n: ['', ''], en: !cc[2], heart: 1 });
+      added++;
+    }
+  }
+  if (hv.length) console.log(`[build] heart vendors: ${hv.length} NPCs, ${added} offers matched to items (${missed} not found)`);
+}
 const priceMap = new Map();
 for (const p of prices) priceMap.set(p.id, [p.buys?.unit_price || 0, p.buys?.quantity || 0, p.sells?.unit_price || 0, p.sells?.quantity || 0]);
 
@@ -430,8 +459,9 @@ let vendorIndex = [];
     for (const r of it.w?.sold || []) {
       if (!r.k) continue;
       let v = vendors.get(r.k);
-      if (!v) vendors.set(r.k, (v = { k: r.k, n: r.v, off: 1, loc: new Map(), it: [], cur: new Set() }));
+      if (!v) vendors.set(r.k, (v = { k: r.k, n: [NPC_ES[r.v[1]] || r.v[0], r.v[1]], off: 1, loc: new Map(), it: [], cur: new Set() }));
       if (!r.off) v.off = 0;
+      if (r.heart) v.heart = 1;
       for (const l of r.l || []) {
         const lk = `${l.a?.[1] || ''}|${l.z?.[1] || ''}`;
         if (!v.loc.has(lk)) v.loc.set(lk, { a: l.a, z: l.z, c: where(l.a?.[1], l.z?.[1]) });
@@ -445,7 +475,7 @@ let vendorIndex = [];
   }
   const curNames = Object.fromEntries(names.currencies.map((c) => [c.id, [c.es, c.en]]));
   curNames[1] ||= ['Moneda', 'Coin'];
-  const list = [...vendors.values()].map((v) => ({ k: v.k, n: v.n, off: v.off, loc: [...v.loc.values()], it: v.it, cur: [...v.cur] }))
+  const list = [...vendors.values()].map((v) => ({ k: v.k, n: v.n, off: v.off, heart: v.heart || 0, loc: [...v.loc.values()], it: v.it, cur: [...v.cur] }))
     .sort((a, b) => a.off - b.off || b.it.length - a.it.length || a.n[1].localeCompare(b.n[1]));
   const curCount = new Map();
   for (const v of list) for (const c of v.cur) curCount.set(c, (curCount.get(c) || 0) + 1);
@@ -544,9 +574,13 @@ function walk(dir) {
 // ---------- 10. Static files, pages, SEO ----------
 fs.cpSync('static', DIST, { recursive: true });
 // Service worker at the site root (installable app, offline copies of visited pages).
-await esbuild.build({ entryPoints: ['src/client/sw.js'], bundle: true, minify: true, format: 'iife', target: ['es2020'], outfile: path.join(DIST, 'sw.js'), define: { __VERSION__: JSON.stringify(assetVersion) }, logLevel: 'warning' });
+// APP_ENABLED=1 turns the installable app on; otherwise sw.js only removes itself (for visitors who got it earlier).
+if (process.env.APP_ENABLED !== '1') {
+  fs.rmSync(path.join(DIST, 'manifest.webmanifest'), { force: true });
+  fs.writeFileSync(path.join(DIST, 'sw.js'), "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n.startsWith('bl-')).map(n=>caches.delete(n)))).then(()=>self.registration.unregister())));\n");
+} else await esbuild.build({ entryPoints: ['src/client/sw.js'], bundle: true, minify: true, format: 'iife', target: ['es2020'], outfile: path.join(DIST, 'sw.js'), define: { __VERSION__: JSON.stringify(assetVersion) }, logLevel: 'warning' });
 const mon = monetizationFromEnv(process.env);
-const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile, mon };
+const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile, mon, app: process.env.APP_ENABLED === '1' };
 console.log(`[build] monetization: ads ${mon.adClient ? (mon.adSlot ? 'on (with ad boxes)' : 'on (script only)') : 'off'}, donate ${mon.donate ? 'on' : 'off'}, affiliate ${mon.affiliate ? 'on' : 'off'}, analytics ${mon.cfBeacon ? 'on' : 'off'}`);
 const POPULAR = [19721, 19976, 19675, 24295, 19685, 24277, 30689, 46731];
 const popular = POPULAR.map((id) => items.get(id)).filter(Boolean).map((o) => ({ id: o.id, n: o.n, ic: o.ic, r: o.r }));
@@ -612,7 +646,7 @@ const instancesData = (() => {
   fs.writeFileSync(path.join(DATA, 'goto.json'), JSON.stringify(go));
   console.log(`[build] header search: ${go.length} places, vendors, dungeons, maps and achievements`);
 }
-const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData, instances: instancesData })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
+const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData, instances: instancesData, supporters: readData('supporters.json').supporters || [] })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');
   const file = p.endsWith('/') ? f : `${f}.html`;

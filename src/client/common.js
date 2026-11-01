@@ -68,8 +68,13 @@ if (menu) {
 }
 
 // Installable app: the service worker keeps assets and visited pages for offline use.
+// On stand-by unless the build sets APP_ENABLED=1: then any copy installed earlier is removed.
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* not available */ }); });
+  if (document.body.dataset.app === '1') {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* not available */ }); });
+  } else {
+    navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
+  }
 }
 
 // Event alarms ring on every page of the site.

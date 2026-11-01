@@ -16,6 +16,8 @@ export function monetizationFromEnv(env) {
     donate: url(env.DONATE_URL),
     affiliate: url(env.AFFILIATE_URL),
     cfBeacon: /^[a-f0-9]{32}$/.test(env.CF_ANALYTICS_TOKEN || '') ? env.CF_ANALYTICS_TOKEN : '',
+    // Cafecito (Argentina): https://cafecito.app/usuario
+    cafecito: /^https:\/\/cafecito\.app\/[A-Za-z0-9_.-]+\/?$/.test(env.CAFECITO_URL || '') ? env.CAFECITO_URL : '',
   };
 }
 
@@ -38,7 +40,7 @@ export function adSlot(lang, mon = {}, where = 'page') {
 export function supportLinks(lang, mon = {}) {
   const es = lang === 'es';
   const out = [];
-  if (mon.donate) out.push(`<li><a class="support-link" href="${esc(mon.donate)}" rel="noopener" target="_blank">☕ ${es ? 'Apoyá el sitio' : 'Support the site'}</a></li>`);
+  out.push(`<li><a class="support-link" href="${es ? '/es/apoyar' : '/en/support'}">☕ ${es ? 'Apoyá el sitio' : 'Support the site'}</a></li>`);
   if (mon.affiliate) out.push(`<li><a href="${esc(mon.affiliate)}" rel="sponsored noopener" target="_blank">${es ? 'Comprá Guild Wars 2' : 'Buy Guild Wars 2'}</a> <span class="muted">(${es ? 'enlace de afiliado' : 'affiliate link'})</span></li>`);
   return out.join('');
 }
