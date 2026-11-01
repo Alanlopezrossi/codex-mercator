@@ -125,7 +125,7 @@ function support(lang, meta, supporters) {
   if (m.cafecito) btns.push(`<a class="btn btn-primary btn-lg" href="${esc(m.cafecito)}" rel="noopener" target="_blank">☕ ${es ? 'Invitame un cafecito' : 'Buy me a cafecito'}</a>`);
   if (m.donate) btns.push(`<a class="btn btn-lg" href="${esc(m.donate)}" rel="noopener" target="_blank">💛 ${es ? 'Donar desde el exterior' : 'Donate'}</a>`);
   const how = btns.length
-    ? `<div class="sup-btns">${btns.join('')}</div><p class="small muted">${es ? 'Cafecito acepta tarjetas, Mercado Pago y transferencias en pesos. Desde otros países podés usar el segundo botón.' : 'Cafecito is for payments from Argentina; from other countries use the other button.'}</p>`
+    ? `<div class="sup-btns">${btns.join('')}</div><p class="small muted">${es ? `Cafecito acepta tarjetas, Mercado Pago y transferencias en pesos.${m.donate ? ' Desde otros países podés usar el segundo botón.' : ''}` : `Cafecito is for payments from Argentina${m.donate ? '; from other countries use the other button' : ''}.`}</p>`
     : `<p class="notice">${es ? 'Muy pronto vas a poder apoyar el sitio con Cafecito (pagos en pesos con tarjeta o Mercado Pago) y con donaciones desde el exterior.' : 'Very soon you will be able to support the site with Cafecito and international donations.'}</p>`;
   const list = supporters.length
     ? `<ul class="sup-wall">${supporters.map((s) => `<li><span aria-hidden="true">☕</span> ${esc(s.name)}</li>`).join('')}</ul>`
