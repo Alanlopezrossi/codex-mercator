@@ -58,6 +58,8 @@ const KEY = (h) => (/^Sold by/i.test(h) ? 'sold' : /^Contained in/i.test(h) ? 'c
   : /^Dropped by/i.test(h) ? 'drop' : /^Rewarded by|^Reward/i.test(h) ? 'rew' : /^Salvaged from/i.test(h) ? 'salv' : null);
 
 const out = {};
+const why = { missing: 0, notItem: 0, noAcq: 0, empty: 0 };
+const examples = [];
 let pages = 0;
 let found = 0;
 const queue = [...names];
@@ -69,13 +71,13 @@ await Promise.all(Array.from({ length: CONC }, async () => {
     pages++;
     if (pages % 500 === 0) console.log(`[wiki] ${pages}/${names.length} pages, ${found} with data`);
     await sleep(250);
-    if (!h) continue;
+    if (!h) { why.missing++; continue; }
     // The page must be the item's page (its infobox lists the API id).
     const id = ids.find((x) => new RegExp(`(ids=|item_id=|API[^0-9]{0,40})${x}\\b`).test(h)) || (ids.length === 1 && /Item infobox|infobox-item|class="infobox/i.test(h) ? ids[0] : 0);
-    if (!id) continue;
+    if (!id) { why.notItem++; if (examples.length < 3) examples.push(['notItem', name, h.slice(0, 300).replace(/\s+/g, ' '), (h.match(/infobox[^"]*/g) || []).slice(0, 4)]); continue; }
     const $ = cheerio.load(h);
     const acq = $('h2').filter((_, el) => /^Acquisition/i.test(clean($(el).text()))).first();
-    if (!acq.length) continue;
+    if (!acq.length) { why.noAcq++; if (examples.length < 6) examples.push(['noAcq', name, $('h2').map((_, e) => clean($(e).text())).get().slice(0, 8)]); continue; }
     const rec = { title: name };
     let key = null;
     for (let el = acq.next(); el.length && !el.is('h2'); el = el.next()) {
@@ -102,9 +104,11 @@ await Promise.all(Array.from({ length: CONC }, async () => {
         });
       }
     }
-    if (rec.sold || rec.cont || rec.gath || rec.src) { for (const x of ids) out[x] = rec; found++; }
+    if (rec.sold || rec.cont || rec.gath || rec.src) { for (const x of ids) out[x] = rec; found++; } else { why.empty++; if (examples.length < 9) examples.push(['empty', name, acq.nextAll().slice(0, 8).map((_, e) => e.tagName + ':' + clean($(e).text()).slice(0, 40)).get()]); }
   }
 }));
 fs.mkdirSync('.cache', { recursive: true });
 fs.writeFileSync(`.cache/wiki-items-${SHARD}.json`, JSON.stringify(out));
+console.log('[wiki] reasons', JSON.stringify(why));
+if (LIMIT) console.log('[wiki] examples', JSON.stringify(examples).slice(0, 4000));
 console.log(`[wiki] shard ${SHARD + 1}/${SHARDS} done: ${pages} pages, ${found} with acquisition data, ${Object.keys(out).length} items`);

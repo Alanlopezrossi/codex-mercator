@@ -153,7 +153,8 @@ function acquisitionHtml(lang, it) {
     cont.push({ id, n: [it.refs[id][0], it.refs[id][1]], s: [`(${qty > 1 ? `${qty} · ` : ''}${k[0]})`, `(${qty > 1 ? `${qty} · ` : ''}${k[1]})`], ok: true });
   }
   const gath = (w?.gath || []).filter((e) => e.id !== it.id);
-  if (!w?.sold?.length && !cont.length && !gath.length) return '';
+  const src = (w?.src || []).filter((e) => e.id !== it.id);
+  if (!w?.sold?.length && !cont.length && !gath.length && !src.length) return '';
   const li = L(lang);
   const isEs = lang === 'es';
   let html = '';
@@ -178,6 +179,11 @@ function acquisitionHtml(lang, it) {
   }).join('')}</ul>`;
   if (cont.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.containedIn'))}</h3>${entries(cont, 'chest')}`;
   if (gath.length) html += `<h3 class="h-sub">${esc(t(lang, 'item.gathered'))}</h3>${entries(gath, 'node')}`;
+  const SRC_HEAD = { drop: isEs ? 'Lo sueltan' : 'Dropped by', rew: isEs ? 'Recompensa de' : 'Rewarded by', salv: isEs ? 'Se obtiene reciclando' : 'Salvaged from' };
+  for (const k of ['drop', 'rew', 'salv']) {
+    const list = src.filter((e) => e.k === k);
+    if (list.length) html += `<h3 class="h-sub">${esc(SRC_HEAD[k])}</h3>${entries(list, k === 'salv' ? 'chest' : 'node')}`;
+  }
   return `<section class="card" aria-labelledby="acq-h"><h2 id="acq-h">${esc(t(lang, 'item.acquisition'))}</h2>${html}${wikiCredit(lang, it)}</section>`;
 }
 

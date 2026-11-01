@@ -216,6 +216,8 @@ for (const [k, w] of Object.entries(wiki.items)) {
     if (!w[key]) continue;
     ww[key] = w[key].map((raw) => { const e = W.entry(raw); tally(e.ok); return e; });
   }
+  // Dropped by / rewarded by / salvaged from: names only (enemies, chests, events, items).
+  if (w.src) ww.src = w.src.slice(0, 40).map(([k, raw]) => ({ k, ...W.entry(raw) }));
   it.w = ww;
 }
 console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
@@ -326,7 +328,7 @@ for (const it of items.values()) {
   for (const r of it.rc || []) for (const [id] of r.i) refIds.add(id);
   for (const f of it.w?.forge || []) for (const [id] of f.i) if (id) refIds.add(id);
   for (const f of it.mf || []) for (const [id] of f.i) refIds.add(id);
-  for (const e of [...(it.w?.cont || []), ...(it.w?.gath || [])]) if (e.id) refIds.add(e.id);
+  for (const e of [...(it.w?.cont || []), ...(it.w?.gath || []), ...(it.w?.src || [])]) if (e.id) refIds.add(e.id);
   for (const id of it.u || []) refIds.add(id);
   if (it.x.sfx) refIds.add(it.x.sfx);
   for (const [id] of it.ct || []) refIds.add(id);
