@@ -199,9 +199,9 @@ ${noscript(lang)}
   <aside class="card side" aria-label="${esc(t(lang, 'ach.title'))}">
     <label class="sr-only" for="acf">${esc(t(lang, 'ach.search'))}</label>
     <input id="acf" type="search" placeholder="${esc(t(lang, 'ach.search'))}" autocomplete="off">
-    <div id="acats" class="cat-tree"><p class="muted">${esc(t(lang, 'loading'))}</p></div>
+    <div id="acats" class="cat-tree"><p class="muted loading-fill">${esc(t(lang, 'loading'))}</p></div>
   </aside>
-  <section id="alist" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></section>
+  <section id="alist" class="stack" aria-live="polite"><p class="muted loading-fill">${esc(t(lang, 'loading'))}</p></section>
 </div>`;
 }
 
@@ -209,7 +209,7 @@ function professions(lang) {
   return `${head(lang, 'prof')}
 ${noscript(lang)}
 <div class="prof-tabs" id="ptabs" role="tablist" aria-label="${esc(t(lang, 'prof.title'))}"></div>
-<section id="pbody" class="stack" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></section>
+<section id="pbody" class="stack" aria-live="polite"><p class="muted loading-fill">${esc(t(lang, 'loading'))}</p></section>
 <section class="card builds" aria-labelledby="builds-h">
   <h2 id="builds-h">${lang === 'es' ? 'Builds recomendadas' : 'Recommended builds'}</h2>
   <p class="small muted">${lang === 'es' ? 'Las builds cambian con cada actualización de equilibrio. Estos sitios de la comunidad las mantienen al día (en inglés):' : 'Builds change with every balance update. These community sites keep them up to date:'}</p>

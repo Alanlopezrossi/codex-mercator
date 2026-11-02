@@ -31,15 +31,16 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1366, height: 800 
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-    // Slow data: local data files and the official API answer late (the API is not reachable in every environment).
-    await page.route(/\/data\/|api\.guildwars2\.com/, async (route) => { await new Promise((z) => setTimeout(z, 1500)); if (/api\.guildwars2/.test(route.request().url())) return route.fulfill({ status: 503, body: '' }); return route.continue(); });
+    // Slow data: local data files and the official API answer late. OFFLINE=1 answers the API with an error
+    // (for environments without internet; pages that need the API then show their error state).
+    await page.route(/\/data\/|api\.guildwars2\.com/, async (route) => { await new Promise((z) => setTimeout(z, 1500)); if (process.env.OFFLINE === '1' && /api\.guildwars2/.test(route.request().url())) return route.fulfill({ status: 503, body: '' }); return route.continue(); });
     await page.route(/render\.guildwars2\.com|tiles\.guildwars2\.com|cloudflareinsights|googlesyndication/, (route) => route.fulfill({ status: 204, body: '' }));
     await page.addInitScript(() => {
       window.__cls = 0; window.__src = [];
       new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; if (e.value > 0.01) window.__src.push(`${e.value.toFixed(3)} ${e.sources.map((s) => (s.node?.id ? `#${s.node.id}` : s.node?.nodeName || '?')).join(',')}`); } }).observe({ type: 'layout-shift', buffered: true });
     });
     await page.goto(BASE + p, { waitUntil: 'load' });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(6000);
     const { cls, src } = await page.evaluate(() => ({ cls: window.__cls, src: window.__src }));
     worst = Math.max(worst, cls);
     const line = `${viewport.width}px ${p} CLS ${cls.toFixed(3)}${src.length ? `  (${src.join(' | ')})` : ''}`;

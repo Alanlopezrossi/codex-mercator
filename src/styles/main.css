@@ -719,6 +719,7 @@ html[data-fs='3'] { font-size: 125%; }
 #evTimeline:empty, #vlist:empty, .loading-row { min-height: 100vh; height: 100vh; }
 #evTimeline:empty, #vlist:empty { height: auto; }
 .loading-row { vertical-align: top; }
+.loading-fill { min-height: 100vh; }
 
 /* Report a mistake (item pages) */
 .report summary { cursor: pointer; font-weight: 600; }
