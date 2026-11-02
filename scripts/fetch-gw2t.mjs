@@ -25,6 +25,8 @@ const chunks = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) 
 
 if (!KEY) {
   console.log('[gw2t] GW2T_API_KEY not set: skipping (using data/ only)');
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, JSON.stringify({ error: 'GW2T_API_KEY not set', containers: {}, gone: {}, forge: {} }));
   process.exit(0);
 }
 const t0 = Date.now();
@@ -69,4 +71,5 @@ try {
   console.log(`[gw2t] containers ${Object.keys(containers).length}, removed items ${Object.keys(gone).length}, forge ${Object.keys(forge).length} in ${Math.round((Date.now() - t0) / 1000)} s`);
 } catch (e) {
   console.warn(`[gw2t] skipped: ${e.message}`);
+  fs.writeFileSync(OUT, JSON.stringify({ error: e.message, containers: {}, gone: {}, forge: {} }));
 }

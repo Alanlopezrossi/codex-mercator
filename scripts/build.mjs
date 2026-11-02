@@ -647,6 +647,8 @@ const instancesData = (() => {
     }
   }
   fs.writeFileSync(path.join(DATA, 'goto.json'), JSON.stringify(go));
+  // Public build info (no secrets): helps check which optional sources were used.
+  fs.writeFileSync(path.join(DATA, 'build-info.json'), JSON.stringify({ builtAt, gw2t: { fetchedAt: gw2t.fetchedAt || null, containers: Object.keys(gw2t.containers || {}).length, gone: Object.keys(gw2t.gone || {}).length, forge: Object.keys(gw2t.forge || {}).length, error: gw2t.error || null } }));
   console.log(`[build] header search: ${go.length} places, vendors, dungeons, maps and achievements`);
 }
 const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData, instances: instancesData, supporters: readData('supporters.json').supporters || [] })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
