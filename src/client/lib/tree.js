@@ -26,6 +26,8 @@ function recipeOf(it, root = false) {
   const f = it.w?.forge?.[0] || it.mf?.[0];
   if (f && (root || !it.tp)) return { kind: 'forge', q: f.q || 1, i: f.i.filter(([id]) => id).map(([id, n]) => [id, n]) };
   return null;
+  // Bought from a vendor in exchange for other items (from the item description).
+  if (it.vx?.i?.length) return { kind: 'vendor', q: 1, v: it.vx.v, i: it.vx.i };
 }
 
 // 1) Load every item of the tree level by level (in parallel), 2) build the tree from memory (same result every time).
@@ -80,6 +82,7 @@ function acqHtml(it, id) {
   const src = it.w?.src || [];
   if (src.length) lines.push([es ? 'Se obtiene de' : 'Obtained from', src.slice(0, 3).map((e) => esc(L(e.n))).join(' · ') + more(src.length - 3)]);
   if (it.ach?.length) lines.push([es ? 'Logros' : 'Achievements', it.ach.slice(0, 2).map(([, aes, aen]) => esc(li === 0 ? aes : aen)).join(' · ') + more(it.ach.length - 2)]);
+  if (it.vx?.i?.length) lines.push([es ? 'Se compra a' : 'Bought from', `${esc(it.vx.v)} <span class="muted">(${esc(it.vx.a)})</span>`]);
   if (it.tp) lines.push([es ? 'Bazar' : 'Trading post', es ? 'Se compra y vende en el bazar' : 'Bought and sold on the trading post']);
   const body = lines.length
     ? `<dl class="tr-acq">${lines.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`
@@ -95,7 +98,9 @@ function nodeHtml(node, depth = 0) {
   const it = node.it;
   const label = `${icon(it)}<span class="tr-qty">${num(node.qty, lang)}×</span><a class="r-txt-${esc(it?.r || 'Basic')}" href="${itemPath(lang, node.id, nameOf(it, node.id))}">${esc(nameOf(it, node.id))}</a>`;
   if (!node.kids.length) return `<li class="tr-leaf"><span class="tr-row">${label}${infoBtn(node.id)}<span class="tr-price" data-tp="${node.id}" data-n="${node.qty}"></span></span></li>`;
-  const how = node.r.kind === 'forge'
+  const how = node.r.kind === 'vendor'
+    ? `<span class="tag tag-small">${lang === 'es' ? 'Se compra a' : 'Bought from'} ${esc(node.r.v)}</span>`
+    : node.r.kind === 'forge'
     ? `<span class="tag tag-small tag-forge">${esc(t('item.forge'))}</span>`
     : `<span class="tag tag-small">${esc(node.r.d.map((d) => tr.discipline(lang, d)).join(' / ') || (lang === 'es' ? 'Artesanía' : 'Crafting'))}${node.r.m ? ` ${node.r.m}` : ''}</span>`;
   const row = `<span class="tr-row">${label}${how}${infoBtn(node.id)}</span>`;

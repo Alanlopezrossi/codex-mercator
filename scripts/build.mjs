@@ -221,6 +221,42 @@ for (const [k, w] of Object.entries(wiki.items)) {
   it.w = ww;
 }
 console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
+// Recipes written in the official item descriptions (English text from the API):
+//  - "Purchased from NPC in PLACE in exchange for:\n• 1 Item\n• 2 Items" → vendor exchange (vx), used by the crafting tree.
+//  - "Combine with A, B, and C in the Mystic Forge to create X." → Mystic Forge recipe of X when we have none for it.
+{
+  const findByName = (raw) => {
+    const n = String(raw || '').trim().replace(/\.$/, '');
+    for (const x of [n, n.replace(/^(?:the) /i, ''), n.replace(/s$/, ''), n.replace(/es$/, ''), n.replace(/ies$/, 'y')]) { const f = W.itemByEn.get(x); if (f) return f.id; }
+    return 0;
+  };
+  const qtyName = (part) => {
+    const m = String(part).trim().match(/^(?:(\d[\d,]*)|an?|one)\s+(.+)$/i);
+    return m ? [m[1] ? Number(m[1].replace(/,/g, '')) : 1, m[2]] : [1, String(part).trim()];
+  };
+  let vx = 0;
+  let mf = 0;
+  for (const it of items.values()) {
+    const d = it.d?.[1] || '';
+    if (!d) continue;
+    const pm = d.match(/Purchased from (.+?) in (?:the )?(.+?) (?:in exchange for|for):\s*\n((?:\s*•[^\n]+\n?)+)/i);
+    if (pm) {
+      const ing = pm[3].split('\n').map((l) => l.replace(/^\s*•\s*/, '').trim()).filter(Boolean).map((l) => { const [q, n] = qtyName(l); return [findByName(n), q]; });
+      if (ing.length && ing.every(([id]) => id)) { it.vx = { v: pm[1].trim(), a: pm[2].trim(), i: ing }; vx++; }
+    }
+    const cm = d.match(/Combine (?:it )?with (.+?) in the Mystic Forge to (?:create|make|forge) (?:the |an? )?(.+?)\./i);
+    if (cm) {
+      const target = findByName(cm[2]);
+      const out = target && items.get(target);
+      if (out && !out.rc?.length && !out.w?.forge?.length && !out.mf?.length) {
+        const parts = cm[1].split(/,\s*(?:and\s+)?|\s+and\s+/).map(qtyName).map(([q, n]) => [findByName(n), q]);
+        if (parts.length && parts.every(([id]) => id)) { out.mf = [{ q: 1, qx: 0, i: [[it.id, 1], ...parts] }]; mf++; }
+      }
+    }
+  }
+  console.log(`[build] recipes from descriptions: ${vx} vendor exchanges, ${mf} Mystic Forge recipes`);
+}
+
 // Renown heart vendors (karma and local currencies), extracted once from the archived wiki (data/heart-vendors.json).
 {
   const hv = fs.existsSync(path.join(ROOT, 'data/heart-vendors.json')) ? readData('heart-vendors.json').npcs : [];
@@ -328,6 +364,7 @@ for (const it of items.values()) {
   for (const r of it.rc || []) for (const [id] of r.i) refIds.add(id);
   for (const f of it.w?.forge || []) for (const [id] of f.i) if (id) refIds.add(id);
   for (const f of it.mf || []) for (const [id] of f.i) refIds.add(id);
+  for (const [id] of it.vx?.i || []) refIds.add(id);
   for (const e of [...(it.w?.cont || []), ...(it.w?.gath || []), ...(it.w?.src || [])]) if (e.id) refIds.add(e.id);
   for (const id of it.u || []) refIds.add(id);
   if (it.x.sfx) refIds.add(it.x.sfx);

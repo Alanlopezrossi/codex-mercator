@@ -261,7 +261,7 @@ export function renderItemBody(lang, it, mon = {}) {
   ${adSlot(lang, mon, 'in')}
   ${guidesHtml(lang, it)}
   ${recipesHtml(lang, it)}
-  ${it.rc?.length || it.w?.forge?.length || it.mf?.length ? '<section class="card tree-card" id="tree" aria-labelledby="tree-h" hidden></section>' : ''}
+  ${it.rc?.length || it.w?.forge?.length || it.mf?.length || it.vx?.i?.length ? '<section class="card tree-card" id="tree" aria-labelledby="tree-h" hidden></section>' : ''}
   ${forgeHtml(lang, it)}
   ${contentsHtml(lang, it)}
   ${acquisitionHtml(lang, it)}
