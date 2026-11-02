@@ -1,0 +1,4 @@
+{
+  "note": "Public, non-secret settings. Build variables with the same name (Cloudflare → Settings → Build) take precedence.",
+  "DONATE_URL": "https://paypal.me/alanlopezrossi"
+}

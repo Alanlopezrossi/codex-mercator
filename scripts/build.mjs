@@ -581,7 +581,8 @@ if (process.env.APP_ENABLED !== '1') {
   fs.rmSync(path.join(DIST, 'manifest.webmanifest'), { force: true });
   fs.writeFileSync(path.join(DIST, 'sw.js'), "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n.startsWith('bl-')).map(n=>caches.delete(n)))).then(()=>self.registration.unregister())));\n");
 } else await esbuild.build({ entryPoints: ['src/client/sw.js'], bundle: true, minify: true, format: 'iife', target: ['es2020'], outfile: path.join(DIST, 'sw.js'), define: { __VERSION__: JSON.stringify(assetVersion) }, logLevel: 'warning' });
-const mon = monetizationFromEnv(process.env);
+const siteConfig = fs.existsSync(path.join(ROOT, 'data/site-config.json')) ? readData('site-config.json') : {};
+const mon = monetizationFromEnv({ ...siteConfig, ...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v)) });
 const meta = { siteUrl: SITE_URL, assetVersion, dataVersion, builtAt, counts, searchFile, mon, app: process.env.APP_ENABLED === '1' };
 console.log(`[build] monetization: ads ${mon.adClient ? (mon.adSlot ? 'on (with ad boxes)' : 'on (script only)') : 'off'}, donate ${mon.donate ? 'on' : 'off'}, affiliate ${mon.affiliate ? 'on' : 'off'}, analytics ${mon.cfBeacon ? 'on' : 'off'}`);
 const POPULAR = [19721, 19976, 19675, 24295, 19685, 24277, 30689, 46731];
