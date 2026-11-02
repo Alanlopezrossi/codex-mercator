@@ -16,6 +16,8 @@ export function monetizationFromEnv(env) {
     donate: url(env.DONATE_URL),
     affiliate: url(env.AFFILIATE_URL),
     cfBeacon: /^[a-f0-9]{32}$/.test(env.CF_ANALYTICS_TOKEN || '') ? env.CF_ANALYTICS_TOKEN : '',
+    // Web Analytics turned on with Cloudflare's automatic setup (Cloudflare adds its own script to the pages).
+    cfAuto: env.CF_ANALYTICS_AUTO === '1' || env.CF_ANALYTICS_AUTO === true,
     // Cafecito (Argentina): https://cafecito.app/usuario
     cafecito: /^https:\/\/cafecito\.app\/[A-Za-z0-9_.-]+\/?$/.test(env.CAFECITO_URL || '') ? env.CAFECITO_URL : '',
   };
@@ -56,6 +58,6 @@ export function cspExtras(mon = {}) {
     x.connect.push(...g);
     x.frame.push(...g);
   }
-  if (mon.cfBeacon) { x.script.push('https://static.cloudflareinsights.com'); x.connect.push('https://cloudflareinsights.com'); }
+  if (mon.cfBeacon || mon.cfAuto) { x.script.push('https://static.cloudflareinsights.com'); x.connect.push('https://cloudflareinsights.com'); }
   return x;
 }

@@ -1,4 +1,5 @@
 {
-  "note": "Public, non-secret settings. Build variables with the same name (Cloudflare → Settings → Build) take precedence.",
-  "DONATE_URL": "https://paypal.me/alanlopezrossi"
+  "note": "Public, non-secret settings. Build variables with the same name (Cloudflare \u2192 Settings \u2192 Build) take precedence.",
+  "DONATE_URL": "https://paypal.me/alanlopezrossi",
+  "CF_ANALYTICS_AUTO": "1"
 }
