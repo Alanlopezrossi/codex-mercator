@@ -59,13 +59,15 @@ async function notFound(env, request, lang) {
 }
 
 // Current trading post price for the link preview text (edge-cached 10 min; skipped if the API is slow).
+let tpNote = ''; // last price lookup result, shown in the X-TP header (diagnostics, no personal data)
 async function tpPrice(id) {
   try {
-    const r = await fetch(`https://api.guildwars2.com/v2/commerce/prices/${id}`, { cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(1500) });
+    const r = await fetch(`https://api.guildwars2.com/v2/commerce/prices/${id}`, { headers: { 'User-Agent': 'BazaarLedger (+https://bazaarledger.net)', Accept: 'application/json' }, cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(3000) });
+    tpNote = `http ${r.status}`;
     if (!r.ok) return null;
     const p = await r.json();
     return { buy: p.buys?.unit_price || 0, sell: p.sells?.unit_price || 0 };
-  } catch { return null; }
+  } catch (e) { tpNote = `error ${e.name}`; console.warn('tp price', id, e.message); return null; }
 }
 
 async function itemPage(request, env, ctx, m) {
@@ -102,6 +104,7 @@ async function itemPage(request, env, ctx, m) {
   });
   const res = html(page);
   res.headers.set('X-Canonical-Slug', canonicalSlug);
+  if (it.tp) res.headers.set('X-TP', tpNote || 'none');
   ctx.waitUntil(cache.put(cacheKey, res.clone()));
   if (slug !== canonicalSlug) return redirect(itemPath(lang, id, name));
   return res;
