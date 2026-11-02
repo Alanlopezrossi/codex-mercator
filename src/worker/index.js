@@ -4,7 +4,7 @@ import { META } from '../generated/meta.js';
 import { LANGS, DEFAULT_LANG, slugify, itemPath, t } from '../shared/i18n.js';
 import { layout } from '../shared/layout.js';
 import { renderItemBody, itemTitle, itemDescription, itemJsonLd, RARITY_COLOR } from '../shared/item-page.js';
-import { shardPath } from '../shared/data.js';
+import { shardPath, shardOf } from '../shared/data.js';
 import { iconUrl } from '../shared/format.js';
 import { securityHeaders } from '../shared/security.js';
 
@@ -59,15 +59,15 @@ async function notFound(env, request, lang) {
 }
 
 // Current trading post price for the link preview text (edge-cached 10 min; skipped if the API is slow).
-let tpNote = ''; // last price lookup result, shown in the X-TP header (diagnostics, no personal data)
-async function tpPrice(id) {
+// Trading post price for the link preview text, from the price files of the last build (refreshed every 6 h).
+// (The official API refuses most requests coming from Cloudflare's servers.)
+async function tpPrice(env, request, id) {
   try {
-    const r = await fetch(`https://api.guildwars2.com/v2/commerce/prices/${id}`, { headers: { 'User-Agent': 'BazaarLedger (+https://bazaarledger.net)', Accept: 'application/json' }, cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(3000) });
-    tpNote = `http ${r.status}`;
+    const r = await env.ASSETS.fetch(new Request(new URL(`/data/${META.liveVersion || META.dataVersion}/p/${shardOf(id)}.json`, request.url)));
     if (!r.ok) return null;
-    const p = await r.json();
-    return { buy: p.buys?.unit_price || 0, sell: p.sells?.unit_price || 0 };
-  } catch (e) { tpNote = `error ${e.name}`; console.warn('tp price', id, e.message); return null; }
+    const p = (await r.json())[id];
+    return p ? { buy: p[0], sell: p[1] } : null;
+  } catch { return null; }
 }
 
 async function itemPage(request, env, ctx, m) {
@@ -86,7 +86,7 @@ async function itemPage(request, env, ctx, m) {
   if (!it) return notFound(env, request, lang);
   const name = itemTitle(lang, it);
   const canonicalSlug = slugify(name);
-  const price = it.tp ? await tpPrice(id) : null;
+  const price = it.tp ? await tpPrice(env, request, id) : null;
   const base = siteUrl(request);
   const page = layout({
     lang,
@@ -104,7 +104,6 @@ async function itemPage(request, env, ctx, m) {
   });
   const res = html(page);
   res.headers.set('X-Canonical-Slug', canonicalSlug);
-  if (it.tp) res.headers.set('X-TP', tpNote || 'none');
   ctx.waitUntil(cache.put(cacheKey, res.clone()));
   if (slug !== canonicalSlug) return redirect(itemPath(lang, id, name));
   return res;

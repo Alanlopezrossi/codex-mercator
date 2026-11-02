@@ -414,6 +414,13 @@ fs.mkdirSync(path.join(DIST, 'data/search'), { recursive: true });
 fs.writeFileSync(path.join(DIST, searchFile), searchTsv);
 const priceLines = [...priceMap.entries()].sort((a, b) => a[0] - b[0]).filter(([id]) => items.has(id)).map(([id, p]) => [id, ...p].join('\t'));
 fs.writeFileSync(path.join(DATA, 'prices.tsv'), priceLines.join('\n'));
+// Prices per item shard (buy, sell), read by the Worker for link previews (one small file per page view, no API call).
+{
+  const byShard = new Map();
+  for (const [id, p] of priceMap) if (items.has(id) && (p[0] || p[2])) { const k = shardOf(id); if (!byShard.has(k)) byShard.set(k, {}); byShard.get(k)[id] = [p[0], p[2]]; }
+  fs.mkdirSync(path.join(DATA, 'p'), { recursive: true });
+  for (const [k, v] of byShard) fs.writeFileSync(path.join(DATA, 'p', `${k}.json`), JSON.stringify(v));
+}
 // Trading post table per language (name + prices in one small file, so the page does not need the full search index).
 for (const [li, lang] of LANGS.entries()) {
   const rows = [];
@@ -713,7 +720,7 @@ const instancesData = (() => {
 // Price files stay in /data/<timestamp>/. The rest moves to /data/s<content hash>/, so a rebuild with the same
 // game data keeps the same address and visitors' browsers keep their copy (vendors, item shards, header search…).
 {
-  const LIVE_FILES = ['prices.tsv', 'tp-es.tsv', 'tp-en.tsv', 'meta.json', 'build-info.json'];
+  const LIVE_FILES = ['prices.tsv', 'tp-es.tsv', 'tp-en.tsv', 'meta.json', 'build-info.json', 'p'];
   const tmpLive = path.join(DIST, 'data', `.live-${dataVersion}`);
   fs.mkdirSync(tmpLive, { recursive: true });
   for (const f of LIVE_FILES) if (fs.existsSync(path.join(DATA, f))) fs.renameSync(path.join(DATA, f), path.join(tmpLive, f));

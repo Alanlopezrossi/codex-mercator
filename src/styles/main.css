@@ -728,3 +728,6 @@ html[data-fs='3'] { font-size: 125%; }
 .report-form textarea { resize: vertical; min-height: 96px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); }
 .report-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.fr-skel { opacity: 0.45; animation: frpulse 1.4s ease-in-out infinite; }
+@keyframes frpulse { 50% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .fr-skel { animation: none; } }

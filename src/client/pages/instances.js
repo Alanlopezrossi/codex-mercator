@@ -24,7 +24,9 @@ async function load() {
     const li = (a) => `<li class="fr-item"><span class="fr-name">${esc(a.name)}</span>${a.requirement ? `<span class="small muted">${esc(a.requirement)}</span>` : ''}</li>`;
     box.innerHTML = `${rec.length ? `<h3 class="h-sub">${lang === 'es' ? 'Recomendados' : 'Recommended'}</h3><ul class="fr-list">${rec.map(li).join('')}</ul>` : ''}
       ${tiers.length ? `<h3 class="h-sub">${lang === 'es' ? 'Por nivel' : 'By tier'}</h3><ul class="fr-list">${tiers.map(li).join('')}</ul>` : ''}`;
+    box.removeAttribute('aria-busy');
   } catch {
+    box.removeAttribute('aria-busy');
     box.innerHTML = `<p class="notice">${esc(t('error'))} <button type="button" class="btn btn-small" id="frRetry">${esc(t('retry'))}</button></p>`;
     $('#frRetry')?.addEventListener('click', () => { box.innerHTML = `<p class="muted">${esc(t('loading'))}</p>`; load(); });
   }

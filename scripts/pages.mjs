@@ -10,6 +10,13 @@ const noscript = (lang) => `<noscript><p class="notice">${esc(t(lang, 'noscript'
  * Option list shown as selectable boxes in a row that wraps (radio or checkbox inputs styled as chips).
  * The inputs share a name, so form[name].value works like a <select>.
  */
+// Placeholder with the same shape as the daily fractals list (3 recommended + 12 by tier), so the page does not jump.
+function frSkeleton(lang) {
+  const es = lang === 'es';
+  const li = '<li class="fr-item fr-skel" aria-hidden="true"><span class="fr-name">&nbsp;</span><span class="small muted">&nbsp;</span></li>';
+  return `<p class="sr-only">${esc(t(lang, 'loading'))}</p><h3 class="h-sub">${es ? 'Recomendados' : 'Recommended'}</h3><ul class="fr-list">${li.repeat(3)}</ul><h3 class="h-sub">${es ? 'Por nivel' : 'By tier'}</h3><ul class="fr-list">${li.repeat(12)}</ul>`;
+}
+
 export function chips(name, legend, options, { type = 'radio', all = null, current = '', cls = '' } = {}) {
   const opts = all != null ? [{ v: '', label: all }, ...options] : options;
   return `<fieldset class="chips ${cls}"><legend>${esc(legend)}</legend><div class="chip-row">${opts.map((o, i) => {
@@ -80,7 +87,7 @@ ${instTabs(lang, 'instances')}
   <div class="section-head"><h2 id="frd-h">${esc(t(lang, 'fr.daily'))}</h2><p class="small muted"><span id="frReset"></span></p></div>
   <p class="small muted">${esc(t(lang, 'fr.dailyHelp'))}</p>
   ${noscript(lang)}
-  <div id="frDaily" class="fr-daily" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></div>
+  <div id="frDaily" class="fr-daily" aria-live="polite" aria-busy="true">${frSkeleton(lang)}</div>
 </section>
 ${f ? `<section class="card" aria-labelledby="fra-h"><h2 id="fra-h">${esc(t(lang, 'fr.about'))}</h2><p>${esc(L(f.d))}</p>${hubHtml(f.hub)}<p class="small"><strong>${esc(t(lang, 'fr.currency'))}:</strong> ${f.currencies.map((c) => esc(L(c))).join(' · ')}</p></section>` : ''}
 <h2 class="section-title">${esc(t(lang, 'fr.strikes'))}</h2>
