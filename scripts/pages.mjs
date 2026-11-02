@@ -185,7 +185,7 @@ ${noscript(lang)}
 <table class="data-table" id="btable">
   <caption id="btcap" class="sr-only">${esc(t(lang, 'bazaar.title'))}</caption>
   <thead><tr>${col('name', t(lang, 'name'), 'left')}${col('buy', t(lang, 'bazaar.buy'))}${col('sell', t(lang, 'bazaar.sell'))}${col('margin', t(lang, 'bazaar.margin'))}${col('supply', t(lang, 'bazaar.supply'))}${col('demand', t(lang, 'bazaar.demand'))}</tr></thead>
-  <tbody id="bbody"><tr><td colspan="6" class="empty">${esc(t(lang, 'loading'))}</td></tr></tbody>
+  <tbody id="bbody"><tr><td colspan="6" class="empty loading-row">${esc(t(lang, 'loading'))}</td></tr></tbody>
 </table>
 </div>
 <p class="muted small">${esc(t(lang, 'bazaar.marginHelp'))} ${esc(t(lang, 'item.feesNote'))}</p>
@@ -221,8 +221,9 @@ ${noscript(lang)}
 </section>`;
 }
 
-function events(lang) {
+function events(lang, evCats = []) {
   const es = lang === 'es';
+  const li = es ? 0 : 1;
   const clock = `<div class="clock" aria-live="off"><p class="small muted">${esc(t(lang, 'ev.localTime'))}</p><p class="clock-time" id="evClock">--:--</p><p class="small muted" id="evUtc"></p></div>`;
   return `${head(lang, 'ev', clock)}
 ${noscript(lang)}
@@ -232,7 +233,7 @@ ${noscript(lang)}
     ${chips('evr', t(lang, 'ev.range'), [2, 4, 8].map((h) => ({ v: h, label: `${h} h` })), { current: 2, cls: 'inline' })}
     <div class="field check"><input id="evtop" type="checkbox"><label for="evtop">${esc(t(lang, 'ev.topTimes'))}</label></div>
   </div>
-  <div id="evcats">${chips('evc', t(lang, 'ev.category'), [], { all: t(lang, 'all') })}</div>
+  <div id="evcats">${chips('evc', t(lang, 'ev.category'), evCats.map((c) => ({ v: c[1], label: c[li] })), { all: t(lang, 'all') })}</div>
 </form>
 <details class="card ev-alarms" id="evAlarms">
   <summary><span class="al-title">🔔 ${esc(t(lang, 'al.title'))}</span> <span class="small muted" id="alCount"></span></summary>
@@ -432,14 +433,14 @@ function notFound(lang) {
   return `<section class="empty-state"><h1>${esc(t(lang, 'notfound.title'))}</h1><p class="lead">${esc(t(lang, 'notfound.lead'))}</p><p><a class="btn btn-primary" href="${pagePath(lang, 'home')}">${esc(t(lang, 'notfound.back'))}</a></p></section>`;
 }
 
-export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] }, instances: frData = { strikes: [], fractals: null }, supporters = [] } = {}) {
+export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dungeons: [], other: [] }, instances: frData = { strikes: [], fractals: null }, supporters = [], evCats = [] } = {}) {
   const out = {};
   for (const lang of LANGS) {
     const base = { lang, meta };
     const P = (page, body, extra = {}) => {
       out[pagePath(lang, page)] = layout({ ...base, page, ads: extra.ads, alternates: alternatesFor(page), title: extra.title ?? t(lang, `nav.${page}`), description: extra.description || t(lang, `${extra.lead || page}`), body, scripts: extra.scripts, styles: extra.styles, jsonLd: extra.jsonLd, noindex: extra.noindex });
     };
-    P('events', events(lang), {
+    P('events', events(lang, evCats), {
       title: '', description: t(lang, 'ev.lead'), scripts: ['events'],
       jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Bazaar Ledger', url: `${meta.siteUrl}/${lang}/`, inLanguage: lang, potentialAction: { '@type': 'SearchAction', target: `${meta.siteUrl}${pagePath(lang, 'items')}?q={query}`, 'query-input': 'required name=query' } },
     });

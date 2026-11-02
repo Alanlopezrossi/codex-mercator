@@ -709,7 +709,7 @@ const instancesData = (() => {
   fs.writeFileSync(path.join(DATA, 'build-info.json'), JSON.stringify({ builtAt, gw2t: { fetchedAt: gw2t.fetchedAt || null, containers: Object.keys(gw2t.containers || {}).length, gone: Object.keys(gw2t.gone || {}).length, forge: Object.keys(gw2t.forge || {}).length, error: gw2t.error || null } }));
   console.log(`[build] header search: ${go.length} places, vendors, dungeons, maps and achievements`);
 }
-const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, dungeons: dungeonData, instances: instancesData, supporters: readData('supporters.json').supporters || [] })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
+const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, evCats: [...new Map(events.map((e) => [e.c[1], e.c])).values()], dungeons: dungeonData, instances: instancesData, supporters: readData('supporters.json').supporters || [] })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');
   const file = p.endsWith('/') ? f : `${f}.html`;

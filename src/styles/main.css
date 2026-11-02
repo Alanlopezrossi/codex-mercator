@@ -712,3 +712,10 @@ html[data-fs='3'] { font-size: 125%; }
 .tr-acq dd { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
 .tr-acq-box p { margin: 0; }
 @media (max-width: 600px) { .tr-acq-box { margin-left: 0; } .tr-acq div { grid-template-columns: minmax(0, 1fr); } }
+
+/* Layout stability (CLS): reserve room for text and lists that scripts fill in after the page loads,
+   so nothing below them jumps. A full screen of space keeps the rest of the page out of view until the data arrives. */
+.stamp, .clock p, #evHidden, #cmpNote { min-height: 1.5em; }
+#evTimeline:empty, #vlist:empty, .loading-row { min-height: 100vh; height: 100vh; }
+#evTimeline:empty, #vlist:empty { height: auto; }
+.loading-row { vertical-align: top; }

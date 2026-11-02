@@ -225,10 +225,12 @@ async function init() {
     tl.innerHTML = `<p class="notice">${esc(t('error'))}</p>`;
     return;
   }
-  const cats = [...new Map(events.map((e) => [e.c[1], e.c[li]])).entries()];
-  // Category boxes (one row that wraps), same markup as the server-rendered chip groups.
+  // Category boxes come in the page (built from the same data); add any category that is missing (older cached page).
   const row = $('#evcats .chip-row');
-  row.insertAdjacentHTML('beforeend', cats.map(([k, v], i) => `<input type="radio" class="chip-input" name="evc" id="evc-c${i}" value="${esc(k)}"><label class="chip" for="evc-c${i}">${esc(v)}</label>`).join(''));
+  const have = new Set([...row.querySelectorAll('input')].map((x) => x.value));
+  const cats = [...new Map(events.map((e) => [e.c[1], e.c[li]])).entries()].filter(([k]) => !have.has(k));
+  const n = row.querySelectorAll('input').length;
+  if (cats.length) row.insertAdjacentHTML('beforeend', cats.map(([k, v], i) => `<input type="radio" class="chip-input" name="evc" id="evc-x${n + i}" value="${esc(k)}"><label class="chip" for="evc-x${n + i}">${esc(v)}</label>`).join(''));
   form.evc.value = st.cat;
   form.evr.value = st.range;
   topEl.checked = st.top;
