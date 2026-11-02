@@ -75,11 +75,14 @@ function acqHtml(it, id) {
   if (it.rc?.length) lines.push([es ? 'Se fabrica' : 'Crafted', esc(it.rc[0].d.map((d) => tr.discipline(lang, d)).join(' / ') || '') + (it.rc[0].m ? ` ${it.rc[0].m}` : '')]);
   if (it.w?.forge?.length || it.mf?.length) lines.push([t('item.forge'), es ? 'Receta en la Forja Mística' : 'Mystic Forge recipe']);
   const sold = it.w?.sold || [];
-  if (sold.length) lines.push([es ? 'Lo venden' : 'Sold by', sold.slice(0, 3).map((r) => { const loc = (r.l || [{ a: r.a, z: r.z }])[0] || {}; const where = [L(loc.a), L(loc.z)].filter(Boolean).join(', '); return `${esc(L(r.v))}${where ? ` <span class="muted">(${esc(where)})</span>` : ''}${L(r.c) ? ` · ${esc(L(r.c))}` : ''}`; }).join('<br>') + more(sold.length - 3)]);
-  const cont = [...(it.ci || []).map(([bid]) => (it.refs?.[bid] ? [it.refs[bid][0], it.refs[bid][1]] : null)).filter(Boolean), ...(it.w?.cont || []).map((e) => e.n)];
+  if (sold.length) lines.push([es ? 'Lo venden' : 'Sold by', sold.slice(0, 3).map((r) => { const loc = (r.l || [{ a: r.a, z: r.z }])[0] || {}; const where = [L(loc.a), L(loc.z)].filter(Boolean).join(', '); return `${esc(L(r.v))}${where ? ` <span class="muted">(${esc(where)})</span>` : ''}${(r.c?.[li] || '') ? ` · ${esc(r.c[li])}` : ''}`; }).join('<br>') + more(sold.length - 3)]);
+  // Spanish view: leave out what the wiki only has in English (and is not an item), so the text is all in one language.
+  const ok = (e) => !es || e.ok || e.id;
+  const cont = [...(it.ci || []).map(([bid]) => (it.refs?.[bid] ? [it.refs[bid][0], it.refs[bid][1]] : null)).filter(Boolean), ...(it.w?.cont || []).filter(ok).map((e) => e.n)];
   if (cont.length) lines.push([es ? 'Viene en' : 'Contained in', cont.slice(0, 3).map((n) => esc(L(n))).join(' · ') + more(cont.length - 3)]);
-  if (it.w?.gath?.length) lines.push([es ? 'Se recolecta' : 'Gathered', it.w.gath.slice(0, 3).map((e) => esc(L(e.n))).join(' · ') + more(it.w.gath.length - 3)]);
-  const src = it.w?.src || [];
+  const gath = (it.w?.gath || []).filter(ok);
+  if (gath.length) lines.push([es ? 'Se recolecta' : 'Gathered', gath.slice(0, 3).map((e) => esc(L(e.n))).join(' · ') + more(gath.length - 3)]);
+  const src = (it.w?.src || []).filter(ok);
   if (src.length) lines.push([es ? 'Se obtiene de' : 'Obtained from', src.slice(0, 3).map((e) => esc(L(e.n))).join(' · ') + more(src.length - 3)]);
   if (it.ach?.length) lines.push([es ? 'Logros' : 'Achievements', it.ach.slice(0, 2).map(([, aes, aen]) => esc(li === 0 ? aes : aen)).join(' · ') + more(it.ach.length - 2)]);
   if (it.vx?.i?.length) lines.push([es ? 'Se compra a' : 'Bought from', `${esc((es && it.vx.ve) || it.vx.v)} <span class="muted">(${esc((es && it.vx.ae) || it.vx.a)})</span>`]);

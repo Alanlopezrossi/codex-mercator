@@ -206,7 +206,7 @@ for (const [k, w] of Object.entries(wiki.items)) {
       tally(c[2]); tally(nt[2]);
       const base = vendorBase(v);
       const loc = parseLoc(area, zone);
-      const row = { v: [NPC_ES[base] || base, base], k: vendorKey(v), l: loc, c: [c[0], c[1]], n: [nt[0], nt[1]], en: !(c[2] && nt[2]) };
+      const row = { v: [NPC_ES[base] || base, base], k: vendorKey(v), l: loc, c: [c[0], c[1]], n: [nt[2] ? nt[0] : '', nt[1]], en: !(c[2] && nt[2]) };
       if (/\(vendor currently unavailable\)$/i.test(v)) row.off = 1;
       if (/\(item currently unavailable\)$/i.test(v)) row.io = 1;
       return row;

@@ -73,7 +73,7 @@ export function autocomplete(input, list, opts = {}) {
       list.innerHTML = placeHtml + results.map((pos, j) => {
         const i = j + places.length;
         const r = RARITIES[index.rarity[pos]] || 'Basic';
-        const other = lang === 'es' ? index.nameEn[pos] : index.nameEs[pos];
+        const other = '';
         const name = nameOf(pos, lang);
         return `<li id="${list.id}-${i}" role="option" aria-selected="false" data-i="${i}"><span class="r-txt-${r}">${esc(name)}</span>${other && other !== name ? `<span class="muted small" lang="${lang === 'es' ? 'en' : 'es'}">${esc(other)}</span>` : ''}</li>`;
       }).join('');

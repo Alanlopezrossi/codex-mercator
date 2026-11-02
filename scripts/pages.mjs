@@ -85,7 +85,7 @@ ${instTabs(lang, 'instances')}
 ${f ? `<section class="card" aria-labelledby="fra-h"><h2 id="fra-h">${esc(t(lang, 'fr.about'))}</h2><p>${esc(L(f.d))}</p>${hubHtml(f.hub)}<p class="small"><strong>${esc(t(lang, 'fr.currency'))}:</strong> ${f.currencies.map((c) => esc(L(c))).join(' · ')}</p></section>` : ''}
 <h2 class="section-title">${esc(t(lang, 'fr.strikes'))}</h2>
 <p class="muted small">${esc(t(lang, 'fr.strikesHelp'))}</p>
-<div class="dg-grid">${data.strikes.map((g) => `<article class="card dg"><h3>${esc(L(g.x))}</h3>${hubHtml(g.hub)}<ol class="dg-paths">${g.list.map((n) => `<li>${esc(L(n))}${lang === 'es' && n[0] !== n[1] ? ` <span class="small muted" lang="en">(${esc(n[1])})</span>` : ''}</li>`).join('')}</ol></article>`).join('')}</div>
+<div class="dg-grid">${data.strikes.map((g) => `<article class="card dg"><h3>${esc(L(g.x))}</h3>${hubHtml(g.hub)}<ol class="dg-paths">${g.list.map((n) => `<li>${esc(L(n))}</li>`).join('')}</ol></article>`).join('')}</div>
 <p class="muted small">${lang === 'es' ? 'Fractales del día, nombres de mapas y puntos de ruta: API oficial de Guild Wars 2.' : "Today's fractals, map names and waypoints: official Guild Wars 2 API."}</p>`;
 }
 
@@ -102,12 +102,12 @@ function dungeons(lang, data) {
       ${mapLink(x) ? `<a class="btn btn-small" href="${esc(mapLink(x))}">📍 ${esc(t(lang, 'dg.onMap'))}</a>` : ''}
     </div>`;
   const cards = data.dungeons.map((x, i) => `<article class="card dg" id="${esc(x.id)}">
-    <header class="dg-head"><span class="dg-num" aria-hidden="true">${i + 1}</span><div><h2>${esc(L(x.n))}</h2>${lang === 'es' ? `<p class="small muted" lang="en">${esc(x.n[1])}</p>` : ''}</div></header>
+    <header class="dg-head"><span class="dg-num" aria-hidden="true">${i + 1}</span><div><h2>${esc(L(x.n))}</h2></div></header>
     <ul class="dg-tags"><li class="tag">${esc(t(lang, 'dg.story'))} · ${esc(t(lang, 'dg.level'))} ${x.lv[0]}</li><li class="tag">${esc(t(lang, 'dg.explorable'))} · ${esc(t(lang, 'dg.level'))} ${x.lv[1]}</li><li class="tag">${esc(t(lang, 'dg.players'))}</li></ul>
     <p>${esc(L(x.d))}</p>
     ${where(x)}
     <p class="dg-sub">${esc(t(lang, 'dg.paths'))} <span class="count">${x.paths.length}</span></p>
-    <ol class="dg-paths">${x.paths.map((p) => `<li${lang === 'es' ? ' lang="en"' : ''}>${esc(p)}</li>`).join('')}</ol>
+    <ol class="dg-paths">${x.paths.map((p) => `<li>${esc(Array.isArray(p) ? L(p) : p)}</li>`).join('')}</ol>
   </article>`).join('');
   const other = data.other.map((x) => `<article class="card dg dg-other" id="${esc(x.id)}"><h3>${esc(L(x.n))}</h3><p>${esc(L(x.d))}</p>${where(x)}</article>`).join('');
   return `${head(lang, 'dg')}

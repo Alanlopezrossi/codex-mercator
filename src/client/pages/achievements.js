@@ -145,7 +145,7 @@ async function open(catId) {
         ${tiers}
         ${bits ? `<details><summary>${esc(t('ach.objectives'))} (${a.bits.length})</summary><ul class="ref-grid">${bits}</ul></details>` : ''}
         ${rewards ? `<p class="small"><strong>${esc(t('ach.rewards'))}:</strong></p><ul class="ref-list">${rewards}</ul>` : ''}
-        ${guides[a.id] ? `<details class="ach-guide"><summary>${lang === 'es' ? 'Guía de la wiki (en inglés)' : 'Wiki guide'}</summary><p lang="en">${esc(guides[a.id])}</p><p class="small muted">Guild Wars 2 Wiki · GFDL 1.2</p></details>` : ''}
+        ${guides[a.id] && lang === 'en' ? `<details class="ach-guide"><summary>${lang === 'es' ? 'Guía de la wiki (en inglés)' : 'Wiki guide'}</summary><p lang="en">${esc(guides[a.id])}</p><p class="small muted">Guild Wars 2 Wiki · GFDL 1.2</p></details>` : ''}
       </article>`;
     }).join('');
   list.querySelector('h2')?.setAttribute('tabindex', '-1');

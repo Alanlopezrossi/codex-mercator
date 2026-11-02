@@ -100,10 +100,26 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
     [/^Limit (\d+) per week\.$/, (m) => `Límite: ${m[1]} por semana.`],
     [/^Limit (\d+) per day\.$/, (m) => `Límite: ${m[1]} por día.`],
     [/^Limit (\d+) per account\.$/, (m) => `Límite: ${m[1]} por cuenta.`],
+    [/^Limit (\d+) per character\.$/, (m) => `Límite: ${m[1]} por personaje.`],
+    [/^Limit (\d+) per season\.$/, (m) => `Límite: ${m[1]} por temporada.`],
+    [/^Limit (\d+) per month\.$/, (m) => `Límite: ${m[1]} por mes.`],
+    [/^Requires the respective item not already unlocked in the wardrobe\.$/, () => 'Requiere no tener ya desbloqueado el objeto en el armario.'],
+    [/^Requires the respective outfit not already unlocked in the wardrobe\.$/, () => 'Requiere no tener ya desbloqueado el atuendo en el armario.'],
+    [/^Requires the recipe not already unlocked\.$/, () => 'Requiere no tener ya desbloqueada la receta.'],
+    [/^Requires the unlocked Novelty in order to purchase it\.$/, () => 'Requiere tener desbloqueada la novedad para comprarla.'],
+    [/^Requires the guild upgrade (.+?) (\d+)\.$/, (m) => `Requiere la mejora de clan ${m[1]} ${m[2]}.`],
+    [/^Requires Heart of Thorns and Provisions Master (\d+)\w* tier\.$/, (m) => `Requiere Heart of Thorns y el nivel ${m[1]} de Maestro de provisiones.`],
+    [/^Requires (.+?) Mastery track\.$/, (m) => `Requiere la línea de maestría ${m[1]}.`],
+    [/^Requires (\d+) Hall of Monuments reward points\.$/, (m) => `Requiere ${m[1]} puntos de recompensa del Salón de los Monumentos.`],
+    [/^Requires (one|two|three) Homestead Upgrade: (.+)\.$/, (m) => `Requiere ${({ one: 'una', two: 'dos', three: 'tres' })[m[1]]} mejora${m[1] === 'one' ? '' : 's'} de heredad: ${m[2]}.`],
+    [/^Requires account does not own (.+)\.$/, (m) => `Requiere que la cuenta no tenga ${m[1]}.`],
+    [/^Requires the event (.+)\.$/, (m) => `Requiere el evento ${m[1]}.`],
+    [/^Requires the explorable mode of (.+) (\d+) times\.$/, (m) => `Requiere completar ${m[2]} veces el modo explorable de ${places.get(m[1]) || m[1]}.`],
+    [/^Only if the (.+) collection is active\.$/, (m) => `Solo si la colección ${m[1]} está activa.`],
     [/^Requires the festival (.+)\.$/, (m) => (FESTIVALS[m[1]] ? `Requiere el festival ${FESTIVALS[m[1]]}.` : null)],
     [/^Requires the achievement "?(.+?)"?( Mastery)?\.$/, (m) => {
       const a = achievements.get(m[1]);
-      return a ? `Requiere el logro «${a}»${m[2] ? ' (maestría)' : ''}.` : null;
+      return `Requiere el logro «${a || m[1]}»${m[2] ? ' (maestría)' : ''}.`;
     }],
     [/^Requires the item (.+)\.$/, (m) => { const e = nameEs(m[1]); return e ? `Requiere el objeto ${e}.` : null; }],
     [/^Requires the skin (.+)\.$/, (m) => { const e = nameEs(m[1]); return e ? `Requiere la apariencia ${e}.` : null; }],

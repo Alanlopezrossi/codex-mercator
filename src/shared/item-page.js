@@ -124,14 +124,14 @@ function guideText(lang, it, text) {
     });
 }
 function guidesHtml(lang, it) {
-  if (!it.gd?.length) return '';
+  // The hand-written guides exist only in Spanish: shown on the Spanish pages only (no mixed languages).
+  if (!it.gd?.length || lang !== 'es') return '';
   return it.gd.map((key) => {
     const g = GUIDES.guides?.[key];
     if (!g) return '';
     const needs = (g.needs || []).map(([id, n]) => `<li>${refLink(lang, id, it.refs?.[id], n)}</li>`).join('');
     const sections = (g.sections || []).map((sec) => `<h3 class="h-sub">${esc(sec.title)}</h3><ol class="guide-steps">${(sec.steps || []).map((st) => `<li>${guideText(lang, it, st)}</li>`).join('')}</ol>`).join('');
     return `<section class="card guide" aria-labelledby="g-${esc(key)}" lang="es"><h2 id="g-${esc(key)}">${lang === 'es' ? 'Guía' : 'Guide'}: ${esc(g.title)}</h2>
-      ${lang === 'es' ? '' : '<p class="small muted" lang="en">This guide is only available in Spanish for now.</p>'}
       <p>${guideText(lang, it, g.intro || '')}</p>
       ${g.requires?.length ? `<h3 class="h-sub">Requisitos</h3><ul class="plain-list">${g.requires.map((r) => `<li>${guideText(lang, it, r)}</li>`).join('')}</ul>` : ''}
       ${needs ? `<details class="more"><summary>Materiales en total (${(g.needs || []).length})</summary><ul class="ref-grid">${needs}</ul></details>` : ''}
@@ -143,7 +143,7 @@ function guidesHtml(lang, it) {
 function acquisitionHtml(lang, it) {
   const w = it.w;
   // The wiki sometimes lists the item inside its own containers: those entries are dropped.
-  const cont = (w?.cont || []).filter((e) => e.id !== it.id);
+  const cont = (w?.cont || []).filter((e) => e.id !== it.id && (lang !== 'es' || e.ok || e.id));
   // Containers from the container data that the wiki list does not already have.
   const seen = new Set(cont.map((e) => e.id).filter(Boolean));
   for (const [id, qty, kind] of it.ci || []) {
@@ -152,8 +152,10 @@ function acquisitionHtml(lang, it) {
     const k = KIND[kind] || KIND.Chance;
     cont.push({ id, n: [it.refs[id][0], it.refs[id][1]], s: [`(${qty > 1 ? `${qty} · ` : ''}${k[0]})`, `(${qty > 1 ? `${qty} · ` : ''}${k[1]})`], ok: true });
   }
-  const gath = (w?.gath || []).filter((e) => e.id !== it.id);
-  const src = (w?.src || []).filter((e) => e.id !== it.id);
+  // On the Spanish pages, entries the wiki only has in English (and that are not items) are left out.
+  const shown = (e) => e.id !== it.id && (lang !== 'es' || e.ok || e.id);
+  const gath = (w?.gath || []).filter(shown);
+  const src = (w?.src || []).filter(shown);
   if (!w?.sold?.length && !cont.length && !gath.length && !src.length) return '';
   const li = L(lang);
   const isEs = lang === 'es';
@@ -162,7 +164,7 @@ function acquisitionHtml(lang, it) {
     const head = isEs ? ['Vendedor', 'Zona', 'Costo', 'Notas'] : ['Vendor', 'Area', 'Cost', 'Notes'];
     const rows = w.sold.map((r) => {
       // Rows whose cost or note could not be translated keep the English text, marked as such.
-      const raw = isEs && r.en ? ' lang="en"' : '';
+      const raw = '';
       // Older data has a/z; current data has a list of places (l).
       const locs = r.l || [{ a: r.a, z: r.z }];
       const where = locs.slice(0, 3).map((x) => [x.a?.[li], x.z?.[li]].filter(Boolean).join(', ')).filter(Boolean).join(' · ') + (locs.length > 3 ? ` · +${locs.length - 3}` : '');
@@ -222,7 +224,7 @@ function priceHtml(lang, it) {
 export function renderItemBody(lang, it, mon = {}) {
   const li = L(lang);
   const name = itemTitle(lang, it);
-  const otherName = it.n[1 - li] && it.n[1 - li] !== name ? it.n[1 - li] : '';
+  const otherName = '';
   const sub = it.st && it.st !== it.t ? tr.sub(lang, it.st) : '';
   const icon = it.ic ? `<img class="item-icon r-${esc(it.r)}" src="${esc(iconUrl(it.ic))}" alt="" width="64" height="64">` : '<span class="item-icon ic-ph" aria-hidden="true"></span>';
   const desc = it.d[li] || it.d[1 - li];

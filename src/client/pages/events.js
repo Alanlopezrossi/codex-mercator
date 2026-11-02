@@ -106,7 +106,7 @@ function renderTimeline(nowMin) {
         const future = sg.start >= limit;
         const cls = ['evt-seg', future ? 'future' : '', on ? 'on' : '', !future && isDark(seg.col) ? 'dark' : '', seg.pos ? 'has-map' : ''].filter(Boolean).join(' ');
         const label = seg.n[li] || seg.n[1];
-        const title = `${label}${seg.n[1] !== label ? ` (${seg.n[1]})` : ''} · ${timeOf(sg.start)}–${timeOf(sg.end)} (${sg.end - sg.start} min)`;
+        const title = `${label} · ${timeOf(sg.start)}–${timeOf(sg.end)} (${sg.end - sg.start} min)`;
         const link = mapLink(seg, ev);
         // Future segments: neutral background with the event color as a top band (keeps the text readable).
         return `<div class="${cls}" data-w="${w}" ${future ? `data-band="${esc(bgOf(seg.col))}"` : `data-bg="${esc(bgOf(seg.col))}"`} title="${esc(title)}">
