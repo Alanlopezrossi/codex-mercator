@@ -75,7 +75,9 @@ function nodeHtml(node, depth = 0) {
   const row = `<span class="tr-row">${label}${how}</span>`;
   const kids = `<ul>${node.kids.map((k) => nodeHtml(k, depth + 1)).join('')}</ul>`;
   if (depth === 0) return `<li class="tr-node tr-root">${row}${kids}</li>`;
-  return `<li class="tr-node"><details${depth < 3 ? ' open' : ''}><summary>${row}</summary>${kids}</details></li>`;
+  // A toggle button next to the row (links inside <summary> are not accessible).
+  const open = depth < 3;
+  return `<li class="tr-node${open ? '' : ' is-closed'}"><button type="button" class="tr-toggle" aria-expanded="${open}" aria-label="${lang === 'es' ? 'Mostrar u ocultar ingredientes' : 'Show or hide ingredients'}"></button>${row}${kids}</li>`;
 }
 
 /** Renders the tree of the item into `box` (a section element). */
@@ -97,6 +99,13 @@ export async function renderTree(box, id) {
     <ul class="tr-total">${rows.map(([lid, n], i) => `<li><span class="tr-row">${icon(items[i])}<span class="tr-qty">${num(n, lang)}×</span><a class="r-txt-${esc(items[i]?.r || 'Basic')}" href="${itemPath(lang, lid, nameOf(items[i], lid))}">${esc(nameOf(items[i], lid))}</a><span class="tr-price" data-tp="${lid}" data-n="${n}"></span></span></li>`).join('')}</ul>
     <p class="small" id="treeCost"></p>`;
   box.hidden = false;
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('.tr-toggle');
+    if (!b) return;
+    const li = b.parentElement;
+    const open = li.classList.toggle('is-closed') === false;
+    b.setAttribute('aria-expanded', String(open));
+  });
   // Live prices for the base materials (sell price, i.e. buying them instantly).
   try {
     const p = await prices(rows.map(([lid]) => lid));

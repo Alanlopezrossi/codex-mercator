@@ -685,10 +685,6 @@ html[data-fs='3'] { font-size: 125%; }
 .tree, .tree ul { list-style: none; margin: 0; padding: 0; }
 .tree ul { margin-left: 14px; padding-left: 14px; border-left: 1px dashed var(--border-strong); }
 .tree li { margin: 4px 0; min-width: 0; }
-.tree details > summary { list-style: none; cursor: pointer; }
-.tree details > summary::-webkit-details-marker { display: none; }
-.tree details > summary::before { content: '▸'; display: inline-block; width: 1em; color: var(--muted); transition: transform 0.15s; }
-.tree details[open] > summary::before { transform: rotate(90deg); }
 .tr-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .tr-row .ic { flex: none; }
 .tr-qty { font: 700 var(--fs-sm) var(--font-mono); color: var(--accent-2); }
@@ -698,3 +694,10 @@ html[data-fs='3'] { font-size: 125%; }
 .tr-total .tr-row { display: flex; width: 100%; }
 .tree-card .tree { overflow-x: auto; padding-bottom: 4px; }
 @media (max-width: 600px) { .tree ul { margin-left: 4px; padding-left: 8px; } .tr-price { margin-left: 0; padding-left: 0; } }
+
+.tr-toggle { width: 22px; height: 22px; margin-right: 2px; border: 0; background: none; color: var(--muted); cursor: pointer; vertical-align: middle; border-radius: 4px; }
+.tr-toggle::before { content: '▾'; }
+.tr-node.is-closed > .tr-toggle::before { content: '▸'; }
+.tr-node.is-closed > ul { display: none; }
+.tr-toggle:hover, .tr-toggle:focus-visible { color: var(--text); background: var(--surface-2); }
+.tr-row .tag-small { white-space: normal; }
