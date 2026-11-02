@@ -122,10 +122,10 @@ function support(lang, meta, supporters) {
   const es = lang === 'es';
   const m = meta.mon || {};
   const btns = [];
-  if (m.cafecito) btns.push(`<a class="btn btn-primary btn-lg" href="${esc(m.cafecito)}" rel="noopener" target="_blank">☕ ${es ? 'Invitame un cafecito' : 'Buy me a cafecito'}</a>`);
-  if (m.donate) btns.push(`<a class="btn btn-lg" href="${esc(m.donate)}" rel="noopener" target="_blank">💛 ${es ? 'Donar desde el exterior' : 'Donate'}</a>`);
+  if (m.cafecito) btns.push(`<a class="btn btn-primary btn-lg" href="${esc(m.cafecito)}" rel="noopener" target="_blank">☕ ${es ? 'Invitame un cafecito (Argentina)' : 'Cafecito (from Argentina)'}</a>`);
+  if (m.donate) btns.push(`<a class="btn btn-lg" href="${esc(m.donate)}" rel="noopener" target="_blank">💛 ${es ? 'Donar desde el exterior (PayPal)' : 'Donate (PayPal)'}</a>`);
   const how = btns.length
-    ? `<div class="sup-btns">${btns.join('')}</div><p class="small muted">${es ? `Cafecito acepta tarjetas, Mercado Pago y transferencias en pesos.${m.donate ? ' Desde otros países podés usar el segundo botón.' : ''}` : `Cafecito is for payments from Argentina${m.donate ? '; from other countries use the other button' : ''}.`}</p>`
+    ? `<div class="sup-btns">${btns.join('')}</div><p class="small muted">${es ? `Cafecito es para pagos desde Argentina: acepta tarjetas, Mercado Pago y transferencias en pesos.${m.donate ? ' Si estás en otro país, usá el botón «Donar desde el exterior» (PayPal).' : ''}` : `Cafecito is for payments from Argentina only (cards, Mercado Pago and transfers in pesos).${m.donate ? ' From any other country, use the “Donate” button (PayPal).' : ''}`}</p>`
     : `<p class="notice">${es ? 'Muy pronto vas a poder apoyar el sitio con Cafecito (pagos en pesos con tarjeta o Mercado Pago) y con donaciones desde el exterior.' : 'Very soon you will be able to support the site with Cafecito and international donations.'}</p>`;
   const list = supporters.length
     ? `<ul class="sup-wall">${supporters.map((s) => `<li><span aria-hidden="true">☕</span> ${esc(s.name)}</li>`).join('')}</ul>`
