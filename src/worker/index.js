@@ -102,6 +102,10 @@ export default {
       return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD', ...SEC } });
     }
     const path = url.pathname;
+    // The old *.workers.dev address moves permanently to the real domain (Google keeps a single site).
+    if (url.hostname.endsWith('.workers.dev') && META.siteUrl && !META.siteUrl.includes('.workers.dev')) {
+      return new Response(null, { status: 301, headers: { Location: META.siteUrl + path + url.search, 'Cache-Control': 'public, max-age=86400', ...SEC } });
+    }
     try {
       // English by default; the Events page is the home page.
       if (path === '/' || path === '') return redirect(`/${DEFAULT_LANG}/`);

@@ -4,6 +4,13 @@ import { autocomplete } from './lib/autocomplete.js';
 import { toast } from './lib/toast.js';
 import { initAlarms } from './lib/alarms.js';
 
+// Static pages on the old *.workers.dev address (served without the Worker): jump to the same page on the real domain.
+if (location.hostname.endsWith('.workers.dev')) {
+  const canon = document.querySelector('link[rel="canonical"]');
+  const origin = canon ? new URL(canon.href).origin : '';
+  if (origin && !origin.endsWith('.workers.dev')) location.replace(origin + location.pathname + location.search + location.hash);
+}
+
 // Theme
 const btn = $('#themeBtn');
 if (btn) {
