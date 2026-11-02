@@ -25,9 +25,9 @@ function recipeOf(it, root = false) {
   // anyone gets them, so below the root they count as base materials (buy or farm them).
   const f = it.w?.forge?.[0] || it.mf?.[0];
   if (f && (root || !it.tp)) return { kind: 'forge', q: f.q || 1, i: f.i.filter(([id]) => id).map(([id, n]) => [id, n]) };
-  return null;
   // Bought from a vendor in exchange for other items (from the item description).
-  if (it.vx?.i?.length) return { kind: 'vendor', q: 1, v: it.vx.v, i: it.vx.i };
+  if (it.vx?.i?.length) return { kind: 'vendor', q: 1, v: (li === 0 && it.vx.ve) || it.vx.v, i: it.vx.i };
+  return null;
 }
 
 // 1) Load every item of the tree level by level (in parallel), 2) build the tree from memory (same result every time).
@@ -82,7 +82,7 @@ function acqHtml(it, id) {
   const src = it.w?.src || [];
   if (src.length) lines.push([es ? 'Se obtiene de' : 'Obtained from', src.slice(0, 3).map((e) => esc(L(e.n))).join(' · ') + more(src.length - 3)]);
   if (it.ach?.length) lines.push([es ? 'Logros' : 'Achievements', it.ach.slice(0, 2).map(([, aes, aen]) => esc(li === 0 ? aes : aen)).join(' · ') + more(it.ach.length - 2)]);
-  if (it.vx?.i?.length) lines.push([es ? 'Se compra a' : 'Bought from', `${esc(it.vx.v)} <span class="muted">(${esc(it.vx.a)})</span>`]);
+  if (it.vx?.i?.length) lines.push([es ? 'Se compra a' : 'Bought from', `${esc((es && it.vx.ve) || it.vx.v)} <span class="muted">(${esc((es && it.vx.ae) || it.vx.a)})</span>`]);
   if (it.tp) lines.push([es ? 'Bazar' : 'Trading post', es ? 'Se compra y vende en el bazar' : 'Bought and sold on the trading post']);
   const body = lines.length
     ? `<dl class="tr-acq">${lines.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`

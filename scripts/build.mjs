@@ -242,7 +242,13 @@ console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the
     const pm = d.match(/Purchased from (.+?) in (?:the )?(.+?) (?:in exchange for|for):\s*\n((?:\s*•[^\n]+\n?)+)/i);
     if (pm) {
       const ing = pm[3].split('\n').map((l) => l.replace(/^\s*•\s*/, '').trim()).filter(Boolean).map((l) => { const [q, n] = qtyName(l); return [findByName(n), q]; });
-      if (ing.length && ing.every(([id]) => id)) { it.vx = { v: pm[1].trim(), a: pm[2].trim(), i: ing }; vx++; }
+      if (ing.length && ing.every(([id]) => id)) {
+        it.vx = { v: pm[1].trim(), a: pm[2].trim(), i: ing };
+        // Same vendor and place as written in the Spanish description.
+        const se = (it.d?.[0] || '').match(/Se compra (?:a la |al |a los |a las |a )(.+?) en (?:la |el |los |las )?(.+?) a cambio de/i);
+        if (se) { it.vx.ve = se[1].trim(); it.vx.ae = se[2].trim(); }
+        vx++;
+      }
     }
     const cm = d.match(/Combine (?:it )?with (.+?) in the Mystic Forge to (?:create|make|forge) (?:the |an? )?(.+?)\./i);
     if (cm) {
