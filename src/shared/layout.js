@@ -60,7 +60,7 @@ ${hreflang}
 <meta property="og:title" content="${esc(o.title || SITE_NAME)}">
 <meta property="og:description" content="${esc(o.description)}">
 <meta property="og:url" content="${esc(canonical)}">
-<meta property="og:image" content="${esc(o.ogImage || `${meta.siteUrl}/og.png`)}">
+<meta property="og:image" content="${esc(o.ogImage || `${meta.siteUrl}/og.png?v=2`)}">
 <meta property="og:locale" content="${lang === 'es' ? 'es_ES' : 'en_US'}">
 <meta name="twitter:card" content="${o.ogImage ? 'summary' : 'summary_large_image'}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
