@@ -24,14 +24,22 @@ export function itemTitle(lang, it) {
   return it.n[li] || it.n[1 - li] || `${t(lang, 'item.unknownItem')} ${it.id}`;
 }
 
-export function itemDescription(lang, it) {
+// Rarity colors (dark theme), used as the accent bar of link previews (Discord reads theme-color).
+export const RARITY_COLOR = { Junk: '#9ea3ad', Basic: '#ebe8e1', Fine: '#6fb2ec', Masterwork: '#5fcf4d', Rare: '#f8d33a', Exotic: '#ffaa33', Ascended: '#ff6aa9', Legendary: '#b98aff' };
+
+/** price: { buy, sell } in copper (optional; shown first so link previews show the price). */
+export function itemDescription(lang, it, price = null) {
   const name = itemTitle(lang, it);
+  const es = lang === 'es';
+  const pr = price && (price.buy || price.sell)
+    ? `${es ? 'Bazar' : 'Trading post'}: ${[price.sell ? `${es ? 'venta' : 'sell'} ${coinText(price.sell)}` : '', price.buy ? `${es ? 'compra' : 'buy'} ${coinText(price.buy)}` : ''].filter(Boolean).join(' · ')}. `
+    : '';
   const kind = [tr.rarity(lang, it.r), tr.type(lang, it.t).toLowerCase()].filter(Boolean).join(' ');
   const lvl = it.l ? (lang === 'es' ? ` de nivel ${it.l}` : ` level ${it.l}`) : '';
   const parts = lang === 'es'
     ? [`${name}: ${kind}${lvl} de Guild Wars 2.`, it.tp ? 'Precio en vivo en el bazar.' : '', it.rc?.length ? 'Receta e ingredientes.' : '', it.w?.forge || it.mf ? 'Receta de la Forja Mística.' : '', 'Cómo conseguirlo y para qué sirve.']
     : [`${name}: ${kind}${lvl} in Guild Wars 2.`, it.tp ? 'Live trading post price.' : '', it.rc?.length ? 'Recipe and ingredients.' : '', it.w?.forge || it.mf ? 'Mystic Forge recipe.' : '', 'How to get it and what it is used for.'];
-  return parts.filter(Boolean).join(' ').slice(0, 300);
+  return (pr + parts.filter(Boolean).join(' ').replace(pr ? /\s*(Precio en vivo en el bazar|Live trading post price)\./ : /$^/, '')).slice(0, 300);
 }
 
 function detailsList(lang, it) {
@@ -272,7 +280,26 @@ export function renderItemBody(lang, it, mon = {}) {
   <section class="card" aria-labelledby="links-h"><h2 id="links-h">${esc(t(lang, 'item.links'))}</h2>
     <ul class="link-list">${links.map(([u, l]) => `<li><a href="${esc(u)}" rel="noopener nofollow">${esc(l)}</a></li>`).join('')}</ul>
   </section>
+  ${reportHtml(lang)}
 </article>`;
+}
+
+/** "Report a mistake": a small form (sent to the site's own database; no account, no email needed). */
+function reportHtml(lang) {
+  const es = lang === 'es';
+  const kinds = es
+    ? [['price', 'Precio'], ['recipe', 'Receta o árbol de crafteo'], ['source', 'Cómo conseguirlo / dónde se vende'], ['name', 'Nombre o traducción'], ['other', 'Otro']]
+    : [['price', 'Price'], ['recipe', 'Recipe or crafting tree'], ['source', 'How to get it / where it is sold'], ['name', 'Name or translation'], ['other', 'Other']];
+  return `<details class="card report js-only" id="report">
+    <summary>⚑ ${es ? '¿Ves un dato incorrecto? Avisanos' : 'Spotted a mistake? Let us know'}</summary>
+    <form id="reportForm" class="report-form">
+      <div class="field"><label for="rkind">${es ? 'Qué está mal' : 'What is wrong'}</label><select id="rkind" name="kind">${kinds.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select></div>
+      <div class="field"><label for="rmsg">${es ? 'Contanos qué viste y cuál es el dato correcto' : 'Tell us what you saw and what the right data is'}</label><textarea id="rmsg" name="msg" rows="4" maxlength="2000" required minlength="5"></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="rweb">Website</label><input id="rweb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <p class="small muted">${es ? 'No hace falta cuenta ni correo. Solo se guarda tu mensaje y la página.' : 'No account or email needed. Only your message and the page are stored.'}</p>
+      <button class="btn" type="submit">${es ? 'Enviar' : 'Send'}</button> <span class="small" id="rstatus" role="status" aria-live="polite"></span>
+    </form>
+  </details>`;
 }
 
 export function itemJsonLd(lang, it, siteUrl) {

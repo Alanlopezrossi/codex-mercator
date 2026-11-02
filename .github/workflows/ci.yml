@@ -19,3 +19,17 @@ jobs:
       - run: npm test
       - name: Syntax check
         run: for f in scripts/*.mjs scripts/lib/*.mjs src/worker/*.js src/shared/*.js; do node --check "$f"; done
+  layout:
+    # Builds the site with fresh API data and checks that no page jumps while it loads (CLS under 0.1).
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run data:fetch && npm run generate
+      - run: node tests/e2e/cls.mjs

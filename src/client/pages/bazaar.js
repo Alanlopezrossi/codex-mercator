@@ -11,7 +11,7 @@ const body = $('#bbody');
 const pager = $('#bpager');
 const stampEl = $('#bstamp');
 const table = $('#btable');
-const dataBase = document.body.dataset.data;
+const dataBase = document.body.dataset.live || document.body.dataset.data; // prices: changes every build
 
 let all = []; // {id, name, other, key, r, ty, buy, buyQty, sell, sellQty}
 const byId = new Map();

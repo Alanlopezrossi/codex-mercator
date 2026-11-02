@@ -709,6 +709,23 @@ const instancesData = (() => {
   fs.writeFileSync(path.join(DATA, 'build-info.json'), JSON.stringify({ builtAt, gw2t: { fetchedAt: gw2t.fetchedAt || null, containers: Object.keys(gw2t.containers || {}).length, gone: Object.keys(gw2t.gone || {}).length, forge: Object.keys(gw2t.forge || {}).length, error: gw2t.error || null } }));
   console.log(`[build] header search: ${go.length} places, vendors, dungeons, maps and achievements`);
 }
+// ---------- 10b. Split the data: what changes every build (prices) and what rarely changes (everything else) ----------
+// Price files stay in /data/<timestamp>/. The rest moves to /data/s<content hash>/, so a rebuild with the same
+// game data keeps the same address and visitors' browsers keep their copy (vendors, item shards, header search…).
+{
+  const LIVE_FILES = ['prices.tsv', 'tp-es.tsv', 'tp-en.tsv', 'meta.json', 'build-info.json'];
+  const tmpLive = path.join(DIST, 'data', `.live-${dataVersion}`);
+  fs.mkdirSync(tmpLive, { recursive: true });
+  for (const f of LIVE_FILES) if (fs.existsSync(path.join(DATA, f))) fs.renameSync(path.join(DATA, f), path.join(tmpLive, f));
+  const h = crypto.createHash('sha256');
+  for (const f of walk(DATA).sort()) h.update(path.relative(DATA, f)).update(fs.readFileSync(f));
+  const staticVersion = `s${h.digest('hex').slice(0, 12)}`;
+  fs.renameSync(DATA, path.join(DIST, 'data', staticVersion));
+  fs.renameSync(tmpLive, DATA);
+  meta.liveVersion = dataVersion;
+  meta.dataVersion = staticVersion;
+  console.log(`[build] data: static ${staticVersion}, prices ${dataVersion}`);
+}
 const pages = Object.fromEntries(Object.entries(renderStaticPages(meta, { popular, evCats: [...new Map(events.map((e) => [e.c[1], e.c])).values()], dungeons: dungeonData, instances: instancesData, supporters: readData('supporters.json').supporters || [] })).map(([k, v]) => [k, v.replaceAll('contact@bazaarledger.com', CONTACT)]));
 for (const [p, html] of Object.entries(pages)) {
   const f = path.join(DIST, p.replace(/^\//, ''), p.endsWith('/') ? 'index.html' : '');

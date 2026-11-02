@@ -3,7 +3,7 @@
 import { META } from '../generated/meta.js';
 import { LANGS, DEFAULT_LANG, slugify, itemPath, t } from '../shared/i18n.js';
 import { layout } from '../shared/layout.js';
-import { renderItemBody, itemTitle, itemDescription, itemJsonLd } from '../shared/item-page.js';
+import { renderItemBody, itemTitle, itemDescription, itemJsonLd, RARITY_COLOR } from '../shared/item-page.js';
 import { shardPath } from '../shared/data.js';
 import { iconUrl } from '../shared/format.js';
 import { securityHeaders } from '../shared/security.js';
@@ -58,11 +58,21 @@ async function notFound(env, request, lang) {
   return html(body, 404, 'public, max-age=60');
 }
 
+// Current trading post price for the link preview text (edge-cached 10 min; skipped if the API is slow).
+async function tpPrice(id) {
+  try {
+    const r = await fetch(`https://api.guildwars2.com/v2/commerce/prices/${id}`, { cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(1500) });
+    if (!r.ok) return null;
+    const p = await r.json();
+    return { buy: p.buys?.unit_price || 0, sell: p.sells?.unit_price || 0 };
+  } catch { return null; }
+}
+
 async function itemPage(request, env, ctx, m) {
   const [, lang, idStr, slug = ''] = m;
   const id = Number(idStr);
   const cache = caches.default;
-  const cacheKey = new Request(`${new URL(request.url).origin}/__item/${META.dataVersion}/${lang}/${id}`);
+  const cacheKey = new Request(`${new URL(request.url).origin}/__item/${META.dataVersion}-${META.assetVersion}/${lang}/${id}`);
   const hit = await cache.match(cacheKey);
   if (hit) {
     const want = hit.headers.get('X-Canonical-Slug') || '';
@@ -74,13 +84,15 @@ async function itemPage(request, env, ctx, m) {
   if (!it) return notFound(env, request, lang);
   const name = itemTitle(lang, it);
   const canonicalSlug = slugify(name);
+  const price = it.tp ? await tpPrice(id) : null;
   const base = siteUrl(request);
   const page = layout({
     lang,
     meta: { ...META, siteUrl: base },
     page: 'items',
     title: name,
-    description: itemDescription(lang, it),
+    description: itemDescription(lang, it, price),
+    themeColor: RARITY_COLOR[it.r],
     alternates: { es: itemPath('es', id, itemTitle('es', it)), en: itemPath('en', id, itemTitle('en', it)) },
     body: renderItemBody(lang, it, META.mon),
     scripts: ['item'],
@@ -95,9 +107,56 @@ async function itemPage(request, env, ctx, m) {
   return res;
 }
 
+// Player reports and anonymous script errors, stored in D1 (no IP, no cookies, no account).
+// Only accepted from the site's own pages; sizes are capped; a hidden "website" field catches simple bots.
+const hits = new Map(); // per isolate, in memory only: at most 10 posts per minute per visitor
+function tooMany(request) {
+  const k = request.headers.get('CF-Connecting-IP') || '';
+  const now = Date.now();
+  const h = (hits.get(k) || []).filter((t) => now - t < 60000);
+  h.push(now);
+  hits.set(k, h);
+  if (hits.size > 5000) hits.clear();
+  return h.length > 10;
+}
+async function feedback(request, env, url) {
+  const done = (status) => new Response(null, { status, headers: { 'Cache-Control': 'no-store', ...SEC } });
+  if (tooMany(request)) return done(429);
+  const origin = request.headers.get('Origin') || '';
+  const own = [url.origin, META.siteUrl].filter(Boolean);
+  if (origin && !own.includes(origin)) return done(403);
+  if (!env.DB) return done(503);
+  const len = Number(request.headers.get('Content-Length') || 0);
+  if (len > 4000) return done(413);
+  let d;
+  try { d = JSON.parse((await request.text()).slice(0, 4000)); } catch { return done(400); }
+  const s = (v, n) => String(v ?? '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, n);
+  const now = new Date().toISOString();
+  try {
+    if (url.pathname === '/api/report') {
+      if (d.website) return done(204); // bot
+      const msg = s(d.msg, 2000);
+      if (msg.length < 5) return done(400);
+      const kind = ['price', 'recipe', 'source', 'name', 'other'].includes(d.kind) ? d.kind : 'other';
+      await env.DB.prepare('INSERT INTO reports (at, lang, item, page, kind, msg) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(now, d.lang === 'es' ? 'es' : 'en', Number.isInteger(d.item) ? d.item : null, s(d.page, 200), kind, msg).run();
+    } else {
+      const msg = s(d.m, 300);
+      if (!msg) return done(400);
+      const src = s(d.s, 200);
+      const line = Number(d.l) | 0;
+      const sig = `${msg}|${src}|${line}`.slice(0, 520);
+      await env.DB.prepare('INSERT INTO errors (sig, msg, src, line, col, page, ua, ver, first_at, last_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sig) DO UPDATE SET count = count + 1, last_at = excluded.last_at, page = excluded.page, ua = excluded.ua, ver = excluded.ver')
+        .bind(sig, msg, src, line, Number(d.c) | 0, s(d.p, 200), s(d.ua, 160), s(d.v, 20), now, now).run();
+    }
+  } catch (e) { console.error('feedback', e); return done(500); }
+  return done(204);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (request.method === 'POST' && (url.pathname === '/api/report' || url.pathname === '/api/err')) return feedback(request, env, url);
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD', ...SEC } });
     }

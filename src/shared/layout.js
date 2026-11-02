@@ -54,13 +54,15 @@ export function layout(o) {
 ${o.noindex ? '<meta name="robots" content="noindex">' : ''}
 <link rel="canonical" href="${esc(canonical)}">
 ${hreflang}
-<meta name="theme-color" content="#14161c">
+<meta name="theme-color" content="${esc(o.themeColor || '#14161c')}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="${SITE_NAME}">
 <meta property="og:title" content="${esc(o.title || SITE_NAME)}">
 <meta property="og:description" content="${esc(o.description)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(o.ogImage || `${meta.siteUrl}/og.png?v=2`)}">
+${o.ogImage ? '<meta property="og:image:width" content="64"><meta property="og:image:height" content="64">' : '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'}
+<meta property="og:image:alt" content="${esc(o.title || SITE_NAME)}">
 <meta property="og:locale" content="${lang === 'es' ? 'es_ES' : 'en_US'}">
 <meta name="twitter:card" content="${o.ogImage ? 'summary' : 'summary_large_image'}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -78,7 +80,7 @@ ${(o.styles || []).map((s) => `<link rel="stylesheet" href="${A}/${s}.css">`).jo
 ${monetizationHead(meta.mon)}
 ${ld}
 </head>
-<body data-app="${meta.app ? 1 : 0}" data-lang="${lang}" data-page="${esc(o.page || '')}" data-assets="${A}" data-data="/data/${meta.dataVersion}" data-search="${esc(meta.searchFile || '')}" data-built="${esc(meta.builtAt)}">
+<body data-app="${meta.app ? 1 : 0}" data-lang="${lang}" data-page="${esc(o.page || '')}" data-assets="${A}" data-data="/data/${meta.dataVersion}" data-live="/data/${meta.liveVersion || meta.dataVersion}" data-search="${esc(meta.searchFile || '')}" data-built="${esc(meta.builtAt)}">
 <a class="skip" href="#main">${esc(t(lang, 'skip'))}</a>
 <header class="site-header">
   <div class="wrap header-row">

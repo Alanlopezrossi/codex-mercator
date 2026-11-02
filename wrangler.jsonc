@@ -15,6 +15,10 @@
   "triggers": {
     "crons": ["17 */6 * * *"]
   },
+  // Player reports ("Report a mistake") and anonymous script errors. Schema: migrations/0001_feedback.sql
+  "d1_databases": [
+    { "binding": "DB", "database_name": "bazaar-ledger-feedback", "database_id": "475c0d1a-c1bd-404c-ae81-a9b14bb4b668" }
+  ],
   "observability": {
     "enabled": true
   }

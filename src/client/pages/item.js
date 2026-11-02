@@ -100,3 +100,24 @@ setInterval(stamp, 15000);
 // Crafting tree down to base materials (only items that are crafted or made in the Mystic Forge).
 const treeBox = $('#tree');
 if (treeBox && id) renderTree(treeBox, id).catch(() => { treeBox.hidden = true; });
+
+// "Report a mistake" form: sent to the site's own database.
+const rf = $('#reportForm');
+if (rf) {
+  const st = $('#rstatus');
+  const es = lang === 'es';
+  rf.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = rf.querySelector('button[type=submit]');
+    btn.disabled = true;
+    st.textContent = es ? 'Enviando…' : 'Sending…';
+    try {
+      const r = await fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: rf.kind.value, msg: rf.msg.value, website: rf.website.value, item: id, lang, page: location.pathname }) });
+      if (!r.ok) throw new Error(r.status);
+      rf.reset();
+      st.textContent = es ? '¡Gracias! Lo vamos a revisar.' : 'Thanks! We will look into it.';
+    } catch {
+      st.textContent = es ? 'No se pudo enviar. Probá de nuevo en un rato.' : 'Could not send it. Please try again later.';
+    } finally { btn.disabled = false; }
+  });
+}

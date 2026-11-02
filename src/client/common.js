@@ -11,6 +11,23 @@ if (location.hostname.endsWith('.workers.dev')) {
   if (origin && !origin.endsWith('.workers.dev')) location.replace(origin + location.pathname + location.search + location.hash);
 }
 
+// Anonymous error reports (message, file, line, page and browser; nothing personal), at most 3 per page view.
+// Errors from browser extensions and other sites are ignored.
+{
+  let sent = 0;
+  const report = (m, src, l, c) => {
+    if (sent >= 3 || !navigator.sendBeacon) return;
+    try {
+      const u = new URL(src || location.href, location.href);
+      if (u.origin !== location.origin || /^Script error\.?$/.test(m)) return;
+      sent++;
+      navigator.sendBeacon('/api/err', JSON.stringify({ m: String(m).slice(0, 300), s: u.pathname, l: l || 0, c: c || 0, p: location.pathname, v: (document.body.dataset.assets || '').split('/').pop(), ua: navigator.userAgent.slice(0, 160) }));
+    } catch { /* never let reporting break the page */ }
+  };
+  addEventListener('error', (e) => report(e.message, e.filename, e.lineno, e.colno));
+  addEventListener('unhandledrejection', (e) => { const r = e.reason; if (r?.name === 'AbortError' || r instanceof TypeError && /fetch|network|load failed/i.test(r.message)) return; report(`Unhandled: ${r?.message || r}`, (r?.stack || '').match(/https?:\/\/[^\s)]+?\.js/)?.[0], 0, 0); });
+}
+
 // Theme
 const btn = $('#themeBtn');
 if (btn) {

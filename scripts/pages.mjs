@@ -381,12 +381,13 @@ function privacy(lang, meta) {
   const statEn = m.cfBeacon || m.cfAuto ? 'We use Cloudflare Web Analytics to count visits in aggregate: it uses no cookies and does not identify you.' : 'If we enable visit statistics, they will be aggregated and cookie-free (Cloudflare Web Analytics), and this page will say so.';
   return prose(lang, 'privacy.title', `
 <p class="muted small">Última revisión: 29 de octubre de 2026.</p>
-${m.adClient ? '<p>Bazaar Ledger no tiene cuentas de usuario ni formularios. El sitio en sí no usa cookies; los anuncios de Google sí pueden usarlas (ver «Publicidad»).</p>' : '<p>Bazaar Ledger no tiene cuentas de usuario, formularios ni publicidad personalizada, y <strong>no usa cookies</strong>.</p>'}
+${m.adClient ? '<p>Bazaar Ledger no tiene cuentas de usuario. El sitio en sí no usa cookies; los anuncios de Google sí pueden usarlas (ver «Publicidad»).</p>' : '<p>Bazaar Ledger no tiene cuentas de usuario ni publicidad personalizada, y <strong>no usa cookies</strong>.</p>'}
 <h2>Qué se guarda en tu navegador</h2>
 <p>Solo preferencias que nunca salen de tu dispositivo: el tema claro u oscuro, tus ítems favoritos y una copia en caché del índice de ítems para que la búsqueda sea rápida. Podés borrarlas cuando quieras limpiando los datos del sitio en tu navegador.</p>
 <h2>Conexiones a terceros</h2>
 <p>Para mostrar precios y datos en vivo, tu navegador se conecta directamente a la API oficial de Guild Wars 2 (api.guildwars2.com) y carga íconos y mosaicos de render.guildwars2.com y tiles.guildwars2.com, servidores de ArenaNet. ArenaNet recibe tu dirección IP como en cualquier conexión web; consultá su <a href="https://www.arena.net/en/legal/privacy-policy" rel="noopener">política de privacidad</a>.</p>
 <h2>Alojamiento</h2>
+<p>Si usás «¿Ves un dato incorrecto?» en una ficha, guardamos solo tu mensaje, el tipo de error, la página y la fecha. Si una página falla en tu navegador, se envía un aviso técnico anónimo (el mensaje de error, la página y el tipo de navegador) para poder corregirlo. No guardamos tu IP ni nada que te identifique.</p>
 <p>El sitio está alojado en Cloudflare, que procesa datos técnicos (IP, navegador, página visitada) para servirlo y protegerlo de ataques, según su <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">política de privacidad</a>. No usamos esos datos para identificarte.</p>
 <h2>Estadísticas</h2>
 <p>${statEs}</p>
@@ -394,12 +395,13 @@ ${adsEs}
 <h2>Contacto</h2>
 <p><a href="mailto:contact@bazaarledger.com">contact@bazaarledger.com</a></p>`, `
 <p class="muted small">Last revised: 29 October 2026.</p>
-${m.adClient ? "<p>Bazaar Ledger has no user accounts or forms. The site itself uses no cookies; Google's ads may (see “Advertising”).</p>" : '<p>Bazaar Ledger has no user accounts, forms or personalized advertising, and <strong>does not use cookies</strong>.</p>'}
+${m.adClient ? "<p>Bazaar Ledger has no user accounts. The site itself uses no cookies; Google's ads may (see “Advertising”).</p>" : '<p>Bazaar Ledger has no user accounts or personalized advertising, and <strong>does not use cookies</strong>.</p>'}
 <h2>What is stored in your browser</h2>
 <p>Only preferences that never leave your device: light or dark theme, your favorite items and a cached copy of the item index so search is fast. You can delete them at any time by clearing this site's data in your browser.</p>
 <h2>Third-party connections</h2>
 <p>To show live prices and data, your browser connects directly to the official Guild Wars 2 API (api.guildwars2.com) and loads icons and map tiles from render.guildwars2.com and tiles.guildwars2.com, which are ArenaNet servers. ArenaNet receives your IP address as with any web request; see their <a href="https://www.arena.net/en/legal/privacy-policy" rel="noopener">privacy policy</a>.</p>
 <h2>Hosting</h2>
+<p>If you use “Spotted a mistake?” on an item page, we store only your message, the kind of mistake, the page and the date. If a page fails in your browser, an anonymous technical notice is sent (the error message, the page and the browser type) so we can fix it. We do not store your IP or anything that identifies you.</p>
 <p>The site is hosted on Cloudflare, which processes technical data (IP, browser, page visited) to serve it and protect it from attacks, under its <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">privacy policy</a>. We do not use that data to identify you.</p>
 <h2>Analytics</h2>
 <p>${statEn}</p>

@@ -719,3 +719,11 @@ html[data-fs='3'] { font-size: 125%; }
 #evTimeline:empty, #vlist:empty, .loading-row { min-height: 100vh; height: 100vh; }
 #evTimeline:empty, #vlist:empty { height: auto; }
 .loading-row { vertical-align: top; }
+
+/* Report a mistake (item pages) */
+.report summary { cursor: pointer; font-weight: 600; }
+.report-form { display: grid; gap: 12px; margin-top: 12px; max-width: 640px; }
+.report-form select, .report-form textarea { width: 100%; }
+.report-form textarea { resize: vertical; min-height: 96px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); }
+.report-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
