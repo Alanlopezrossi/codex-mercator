@@ -4,6 +4,7 @@ import { prices } from '../lib/gw2.js';
 import { isFav, toggleFav } from '../lib/fav.js';
 import { toast } from '../lib/toast.js';
 import { coin, num, netSale } from '../../shared/format.js';
+import { renderTree } from '../lib/tree.js';
 
 const art = $('article.item');
 const id = Number(art?.dataset.item);
@@ -95,3 +96,7 @@ function stamp() {
 refresh();
 setInterval(() => { if (!document.hidden) refresh(); }, 60000);
 setInterval(stamp, 15000);
+
+// Crafting tree down to base materials (only items that are crafted or made in the Mystic Forge).
+const treeBox = $('#tree');
+if (treeBox && id) renderTree(treeBox, id).catch(() => { treeBox.hidden = true; });
