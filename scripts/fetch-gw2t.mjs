@@ -15,7 +15,7 @@ let lastBody = '';
 async function get(p, params = {}) {
   const q = new URLSearchParams({ ...params, apiKey: KEY });
   for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(`${API}${p}?${q}`, { headers: { 'User-Agent': 'BazaarLedger-build (+https://codex-mercator.mindcuriosolab.workers.dev)' }, signal: AbortSignal.timeout(60000) });
+    const res = await fetch(`${API}${p}?${q}`, { headers: { 'User-Agent': 'BazaarLedger-build (+https://bazaarledger.net)' }, signal: AbortSignal.timeout(60000) });
     if (res.ok || res.status === 206) return res.json();
     lastStatus = res.status;
     lastBody = (await res.text().catch(() => '')).slice(0, 120);

@@ -14,7 +14,7 @@ import { monetizationFromEnv } from '../src/shared/monetize.js';
 const ROOT = path.resolve('.');
 const RAW = path.join(ROOT, '.cache/raw');
 const DIST = path.join(ROOT, 'dist');
-const SITE_URL = (process.env.SITE_URL || 'https://codex-mercator.mindcuriosolab.workers.dev').replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://bazaarledger.net').replace(/\/$/, '');
 const readRaw = (f) => JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'));
 const readData = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
 const t0 = Date.now();

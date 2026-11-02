@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import * as cheerio from 'cheerio';
 
-const SITE = process.env.SITE || 'https://codex-mercator.mindcuriosolab.workers.dev';
+const SITE = process.env.SITE || 'https://bazaarledger.net';
 const BASE = 'https://web.archive.org/web/2025id_/https://wiki.guildwars2.com/wiki/';
 const SHARD = Number(process.env.SHARD || 0);
 const SHARDS = Number(process.env.SHARDS || 1);

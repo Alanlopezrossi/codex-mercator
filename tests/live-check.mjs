@@ -1,6 +1,6 @@
 // Daily check against the real world: the official API endpoints the site uses and the live site pages.
 // Run: SITE=https://… node tests/live-check.mjs   (exits with 1 and a list of problems if anything is wrong)
-const SITE = (process.env.SITE || 'https://codex-mercator.mindcuriosolab.workers.dev').replace(/\/$/, '');
+const SITE = (process.env.SITE || 'https://bazaarledger.net').replace(/\/$/, '');
 const API = 'https://api.guildwars2.com';
 const problems = [];
 async function check(url, test = () => true, label = url) {
