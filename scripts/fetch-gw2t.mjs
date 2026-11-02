@@ -10,16 +10,20 @@ const OUT = path.resolve('.cache/raw/gw2t.json');
 const API = 'https://api.gw2treasures.com';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+let lastStatus = 0;
+let lastBody = '';
 async function get(p, params = {}) {
   const q = new URLSearchParams({ ...params, apiKey: KEY });
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(`${API}${p}?${q}`, { headers: { 'User-Agent': 'BazaarLedger-build (+https://codex-mercator.mindcuriosolab.workers.dev)' }, signal: AbortSignal.timeout(60000) });
     if (res.ok || res.status === 206) return res.json();
+    lastStatus = res.status;
+    lastBody = (await res.text().catch(() => '')).slice(0, 120);
     if (res.status === 404) return [];
     if (res.status === 401) throw new Error('GW2T_API_KEY rejected (401)');
     await sleep(2000 * (attempt + 1));
   }
-  throw new Error(`gw2treasures ${p} failed`);
+  throw new Error(`gw2treasures ${p} failed (HTTP ${lastStatus}${lastBody ? `: ${lastBody}` : ''})`);
 }
 const chunks = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
 
@@ -37,7 +41,7 @@ try {
   // 1. Container contents (all of them, in batches of 1000).
   const cIds = await get('/items', { 'container-contents': 'true' });
   const containers = {};
-  for (const part of chunks(cIds, 1000)) {
+  for (const part of chunks(cIds, 200)) {
     for (const c of await get('/items/bulk/container-contents', { ids: part.join(',') })) {
       containers[c.id] = {
         i: c.contents.filter((x) => x.type === 'Item').map((x) => [x.id, x.quantity, x.chance]),
@@ -52,7 +56,7 @@ try {
   const goneIds = all.filter((id) => !official.has(id));
   const gone = {};
   for (const lang of ['en', 'es']) {
-    for (const part of chunks(goneIds, 1000)) {
+    for (const part of chunks(goneIds, 200)) {
       for (const it of await get('/items/bulk/data', { ids: part.join(','), lang })) if (it?.id) (gone[it.id] ||= {})[lang] = it;
       await sleep(300);
     }
