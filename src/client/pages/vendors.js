@@ -1,6 +1,6 @@
 // Vendors (NPCs): who sells what and where. Data: data/vendors.json (built from the wiki "Sold by" tables).
 import { $, lang, li, t, debounce } from '../lib/env.js';
-import { norm } from '../lib/search.js';
+import { norm, terms } from '../lib/search.js';
 import { esc, iconUrl, num } from '../../shared/format.js';
 import { itemPath, pagePath } from '../../shared/i18n.js';
 
@@ -39,7 +39,7 @@ function writeParams() {
 const single = () => (location.hash.match(/^#v=([a-z0-9-]+)/) || [])[1] || '';
 
 function run() {
-  words = norm(form.q.value).split(/\s+/).filter(Boolean);
+  words = terms(form.q.value);
   const cur = Number(form.vc.value || 0);
   const one = single();
   res = vendors.filter((v) => {

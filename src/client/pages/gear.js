@@ -1,6 +1,6 @@
 // Legendary and ascended gear: filters (rarity, slot, subtype, weight, how to get it) over data/gear.json.
 import { $, lang, li, t, debounce } from '../lib/env.js';
-import { norm } from '../lib/search.js';
+import { norm, terms } from '../lib/search.js';
 import { esc, iconUrl, num } from '../../shared/format.js';
 import { itemPath, tr } from '../../shared/i18n.js';
 
@@ -60,7 +60,7 @@ function renderSubs(keep) {
 }
 
 function run() {
-  const words = norm(form.q.value).split(/\s+/).filter(Boolean);
+  const words = terms(form.q.value);
   const rar = form.grar.value;
   const slot = form.gslot.value;
   const sub = form.gsub?.value || '';

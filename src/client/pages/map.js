@@ -3,7 +3,7 @@
 import L from 'leaflet';
 import { $, lang, li, t, debounce } from '../lib/env.js';
 import { toast } from '../lib/toast.js';
-import { norm } from '../lib/search.js';
+import { norm, terms } from '../lib/search.js';
 import { esc, num } from '../../shared/format.js';
 
 const el = $('#gmap');
@@ -110,7 +110,7 @@ async function init() {
   let shown = [];
   function renderList() {
     const ks = kinds();
-    const words = norm(q.value).split(/\s+/).filter(Boolean);
+    const words = terms(q.value);
     const all = entries.filter((e) => ks.has(e.kind) && words.every((w) => e.key.includes(w)));
     shown = all.slice(0, 120);
     countEl.textContent = `${num(all.length, lang)} ${t('results')}`;

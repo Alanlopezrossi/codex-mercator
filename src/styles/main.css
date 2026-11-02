@@ -701,3 +701,5 @@ html[data-fs='3'] { font-size: 125%; }
 .tr-node.is-closed > ul { display: none; }
 .tr-toggle:hover, .tr-toggle:focus-visible { color: var(--text); background: var(--surface-2); }
 .tr-row .tag-small { white-space: normal; }
+.tag-go-ev { color: var(--r-Exotic); border-color: var(--r-Exotic); }
+.tag-go-cat { color: var(--r-Rare); border-color: var(--r-Rare); }

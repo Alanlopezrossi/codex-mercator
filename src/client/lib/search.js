@@ -5,6 +5,14 @@ let loading = null;
 export let index = null;
 
 export const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+// Words of a search, without small words that the game names may or may not have ("Don de la realidad" finds
+// "Don de realidad"; "gift of the reality" finds "Gift of Reality"). Shared by every search box of the site.
+const STOP = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'lo', 'y', 'e', 'a', 'al', 'en', 'un', 'una', 'of', 'the', 'and', 'a', 'an', 'to', 'in']);
+export function terms(q) {
+  const all = norm(q).replace(/[^\p{L}\p{N}\s'-]/gu, ' ').split(/\s+/).filter(Boolean);
+  const main = all.filter((w) => !STOP.has(w));
+  return main.length ? main : all;
+}
 
 export function loadIndex() {
   if (index) return Promise.resolve(index);
@@ -77,7 +85,7 @@ export function search(q, f = {}) {
     if (!nq) for (let i = 0; i < ix.n; i++) if (pass(i)) out.push(i);
     return out;
   }
-  const words = nq.split(/\s+/).filter(Boolean);
+  const words = terms(q);
   const scored = [];
   for (let i = 0; i < ix.n; i++) {
     const k = ix.key[i];

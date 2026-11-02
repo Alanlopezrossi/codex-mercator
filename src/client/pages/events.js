@@ -4,7 +4,7 @@ import { $, lang, li, t, store, debounce } from '../lib/env.js';
 import { esc } from '../../shared/format.js';
 import { segments, segmentsAll } from '../../shared/events.js';
 import { pagePath } from '../../shared/i18n.js';
-import { norm } from '../lib/search.js';
+import { norm, terms } from '../lib/search.js';
 import { toast } from '../lib/toast.js';
 import { toggleAlarm, hasAlarm, alarmId, alarmList, removeAlarm, alarmSettings, setAlarmSettings, playChime, testAlarm, askNotifications, onAlarmsChange } from '../lib/alarms.js';
 
@@ -68,7 +68,7 @@ function matches(ev, segName) {
   const q = norm(st.q);
   if (!q) return true;
   const hay = norm(`${ev.n.join(' ')} ${ev.c.join(' ')} ${segName || Object.values(ev.s).map((s) => s.n.join(' ')).join(' ')}`);
-  return q.split(/\s+/).every((w) => hay.includes(w));
+  return terms(q).every((w) => hay.includes(w));
 }
 
 function renderTimeline(nowMin) {

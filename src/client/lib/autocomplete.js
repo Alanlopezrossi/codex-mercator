@@ -1,6 +1,6 @@
 // Accessible autocomplete (ARIA combobox pattern) on top of the item index.
 import { lang, li, debounce, t } from './env.js';
-import { loadIndex, search, nameOf, index, norm } from './search.js';
+import { loadIndex, search, nameOf, index, norm, terms } from './search.js';
 import { esc } from '../../shared/format.js';
 import { RARITIES, itemPath } from '../../shared/i18n.js';
 
@@ -15,10 +15,10 @@ function loadGoto() {
   if (!goto) goto = fetch(`${document.body.dataset.data}/goto.json`).then((r) => r.json()).then((rows) => rows.map((r) => ({ r, key: norm(`${r[1]} | ${r[2]}`) }))).catch(() => []);
   return goto;
 }
-const KINDS = { page: ['Sección', 'Section'], npc: ['PNJ', 'NPC'], dg: ['Mazmorra', 'Dungeon'], map: ['Mapa', 'Map'], ach: ['Logro', 'Achievement'] };
-const RANK = { page: 0, dg: 1, npc: 2, map: 3, ach: 4 };
+const KINDS = { page: ['Sección', 'Section'], npc: ['PNJ', 'NPC'], dg: ['Mazmorra', 'Dungeon'], map: ['Mapa', 'Map'], ach: ['Logro', 'Achievement'], ev: ['Evento', 'Event'], cat: ['Logros', 'Achievements'] };
+const RANK = { page: 0, dg: 1, ev: 2, npc: 3, map: 4, cat: 5, ach: 6 };
 function searchGoto(rows, q) {
-  const words = norm(q).split(/\s+/).filter(Boolean);
+  const words = terms(q);
   if (!words.length) return [];
   const nq = norm(q);
   return rows.filter((e) => words.every((w) => e.key.includes(w)))

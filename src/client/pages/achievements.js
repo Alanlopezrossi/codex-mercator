@@ -3,6 +3,7 @@ import { $, lang, t, debounce, store } from '../lib/env.js';
 import { get, batched, items as apiItems } from '../lib/gw2.js';
 import { esc, coin, iconUrl, num } from '../../shared/format.js';
 import { itemPath } from '../../shared/i18n.js';
+import { norm, terms } from '../lib/search.js';
 
 const cats = $('#acats');
 const list = $('#alist');
@@ -60,10 +61,12 @@ window.addEventListener('hashchange', () => {
 });
 
 function renderTree(q = '') {
-  const nq = q.trim().toLowerCase();
+  const nq = norm(q);
+  const ws = terms(q);
+  const hit = (s) => ws.every((w) => norm(s).includes(w));
   cats.innerHTML = groups.map((g) => {
     const cs = g.categories.map((id) => categories.get(id)).filter(Boolean).sort((a, b) => a.order - b.order)
-      .filter((c) => !nq || c.name.toLowerCase().includes(nq) || g.name.toLowerCase().includes(nq));
+      .filter((c) => !nq || hit(`${c.name} ${g.name}`));
     if (!cs.length) return '';
     return `<details ${nq ? 'open' : ''}><summary>${esc(g.name)} <span class="count">${cs.length}</span></summary><ul>${cs.map((c) => `<li><a href="#cat=${c.id}" data-cat="${c.id}">${c.icon ? `<img src="${esc(iconUrl(c.icon))}" alt="" width="20" height="20" loading="lazy">` : ''}<span>${esc(c.name)}</span></a></li>`).join('')}</ul></details>`;
   }).join('') || `<p class="muted">${esc(t('noResults'))}</p>`;

@@ -646,6 +646,21 @@ const instancesData = (() => {
       go.push(['ach', a.es, a.en, `${pagePath('es', 'achievements')}#cat=${cat}&a=${a.id}`, `${pagePath('en', 'achievements')}#cat=${cat}&a=${a.id}`, cn[0], cn[1]]);
     }
   }
+  // Events and world bosses: open the events page filtered by that name.
+  const seenEv = new Set();
+  for (const ev of events) {
+    for (const seg of [{ n: ev.n }, ...Object.values(ev.s || {})]) {
+      const [es, en] = seg.n || [];
+      if (!en || seenEv.has(en)) continue;
+      seenEv.add(en);
+      go.push(['ev', es || en, en, `${pagePath('es', 'events')}?q=${encodeURIComponent(es || en)}`, `${pagePath('en', 'events')}?q=${encodeURIComponent(en)}`, ev.n[0] === (es || en) ? ev.c?.[0] || '' : ev.n[0], ev.n[1] === en ? ev.c?.[1] || '' : ev.n[1]]);
+    }
+  }
+  // Achievement categories.
+  if (treeEs && treeEn) for (const c of treeEs.categories) {
+    const en = treeEn.categories.find((x) => x.id === c.id)?.name || c.name;
+    go.push(['cat', c.name, en, `${pagePath('es', 'achievements')}#cat=${c.id}`, `${pagePath('en', 'achievements')}#cat=${c.id}`, '', '']);
+  }
   fs.writeFileSync(path.join(DATA, 'goto.json'), JSON.stringify(go));
   // Public build info (no secrets): helps check which optional sources were used.
   fs.writeFileSync(path.join(DATA, 'build-info.json'), JSON.stringify({ builtAt, gw2t: { fetchedAt: gw2t.fetchedAt || null, containers: Object.keys(gw2t.containers || {}).length, gone: Object.keys(gw2t.gone || {}).length, forge: Object.keys(gw2t.forge || {}).length, error: gw2t.error || null } }));

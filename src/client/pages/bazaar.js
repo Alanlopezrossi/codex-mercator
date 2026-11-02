@@ -1,6 +1,6 @@
 // Trading post: one small file per language with name + prices (build snapshot), then the visible rows refresh live.
 import { $, lang, t, debounce, relTime } from '../lib/env.js';
-import { norm, chatCodeId } from '../lib/search.js';
+import { norm, terms, chatCodeId } from '../lib/search.js';
 import { prices as livePrices, items as apiItems } from '../lib/gw2.js';
 import { esc, coin, num, margin, iconUrl } from '../../shared/format.js';
 import { RARITIES, itemPath } from '../../shared/i18n.js';
@@ -49,7 +49,7 @@ const val = (r, k) => {
 
 function run() {
   const q = norm(form.q.value);
-  const words = q.split(/\s+/).filter(Boolean);
+  const words = terms(q);
   const id = /^\d+$/.test(q) ? Number(q) : chatCodeId(form.q.value);
   const type = form.type.value === '' ? null : Number(form.type.value);
   const rar = form.rarity.value === '' ? null : Number(form.rarity.value);
