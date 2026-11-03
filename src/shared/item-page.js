@@ -214,6 +214,19 @@ function usedInHtml(lang, it) {
   return `<section class="card" aria-labelledby="used-h"><h2 id="used-h">${esc(t(lang, 'item.usedIn'))} <span class="count">${num(it.uc || it.u.length, lang)}</span></h2><ul class="ref-grid">${first}</ul>${restHtml}</section>`;
 }
 
+/** Price history card (filled in the browser from DataWars2), only for items on the trading post. */
+function historyHtml(lang, it) {
+  if (!it.tp) return '';
+  const es = lang === 'es';
+  return `<section class="card hist-card" id="hist" aria-labelledby="hist-h">
+    <div class="hc-head"><h2 id="hist-h">${es ? 'Historial de precios' : 'Price history'}</h2>
+      <div class="hc-tools"><div class="hc-ranges" role="group" aria-label="${es ? 'Período' : 'Period'}"></div>
+      <label class="hc-log small"><input type="checkbox" id="hcLog"> ${es ? 'escala logarítmica' : 'log scale'}</label></div></div>
+    <div class="hc-body" aria-live="polite"><p class="muted">${esc(t(lang, 'loading'))}</p></div>
+    <p class="small muted">${es ? 'Promedio de cada día (o de cada hora en «7 días»). Datos del bazar recopilados por' : 'Average of each day (or hour, in “7 days”). Trading post data collected by'} <a href="https://datawars2.ie" rel="noopener">DataWars2</a>.</p>
+  </section>`;
+}
+
 function priceHtml(lang, it) {
   const vendor = it.v && !(it.f || []).includes('NoSell') ? `<p class="small">${esc(t(lang, 'item.vendor'))}: ${coin(it.v, { lang })}</p>` : '';
   if (!it.tp) {
@@ -268,6 +281,7 @@ export function renderItemBody(lang, it, mon = {}) {
       ${detailsList(lang, it)}
     </section>
   </div>
+  ${historyHtml(lang, it)}
   ${adSlot(lang, mon, 'in')}
   ${guidesHtml(lang, it)}
   ${recipesHtml(lang, it)}

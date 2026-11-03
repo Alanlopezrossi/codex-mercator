@@ -5,6 +5,7 @@ import { isFav, toggleFav } from '../lib/fav.js';
 import { toast } from '../lib/toast.js';
 import { coin, num, netSale } from '../../shared/format.js';
 import { renderTree } from '../lib/tree.js';
+import { initHistory } from '../lib/history.js';
 
 const art = $('article.item');
 const id = Number(art?.dataset.item);
@@ -121,3 +122,7 @@ if (rf) {
     } finally { btn.disabled = false; }
   });
 }
+
+// Price history (DataWars2), loaded when the card comes into view.
+const histBox = $('#hist');
+if (histBox && id) initHistory(histBox, id);

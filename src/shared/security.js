@@ -11,7 +11,7 @@ export function buildCsp(mon = {}) {
     j("style-src 'self'", x.style),
     j("img-src 'self' data: https://render.guildwars2.com https://tiles.guildwars2.com https://tiles1.guildwars2.com https://tiles2.guildwars2.com https://tiles3.guildwars2.com https://tiles4.guildwars2.com", x.img),
     "font-src 'self'",
-    j("connect-src 'self' https://api.guildwars2.com", x.connect),
+    j("connect-src 'self' https://api.guildwars2.com https://api.datawars2.ie", x.connect),
     "manifest-src 'self'",
     "worker-src 'self'",
     "object-src 'none'",
