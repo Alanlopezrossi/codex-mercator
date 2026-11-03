@@ -140,7 +140,8 @@ for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
   }
 }
 const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
-const W = makeTranslator({ items, currencies: names.currencies, places, achievements });
+const wikiEs = fs.existsSync(path.join(ROOT, 'data/wiki-es.json')) ? readData('wiki-es.json').t || {} : {};
+const W = makeTranslator({ items, currencies: names.currencies, places, achievements, phrases: new Map(Object.entries(wikiEs)) });
 // Spanish NPC names (as in the game).
 const NPC_ES = fs.existsSync(path.join(ROOT, 'data/npc-names-es.json')) ? readData('npc-names-es.json').names : {};
 // Vendors (NPCs) are keyed by their English name without the "(vendor currently unavailable)" suffix.
@@ -259,6 +260,22 @@ for (let [k, w0] of Object.entries(wiki.items)) {
 }
 console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
 console.log(`[build] wiki pages matched to the wrong item and skipped: ${wikiRejected}`);
+fs.mkdirSync(path.join(ROOT, '.cache'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, '.cache/wiki-untranslated.json'), JSON.stringify([...W.missed].sort()));
+// Game names (English -> official Spanish) that the machine translation must keep as they are.
+{
+  const g = {};
+  const add = (en, es) => { if (en && es && en.length >= 3 && !/^\(\(\d+\)\)$/.test(en) && !g[en]) g[en] = es; };
+  for (const [en, es] of Object.entries(NPC_ES)) add(en, es);
+  for (const [en, es] of places) add(en, es);
+  for (const [en, es] of achievements) add(en, es);
+  for (const c of names.currencies) add(c.en, c.es);
+  for (const m of names.maps || []) add(m.en, m.es);
+  for (const d of [...(readData('dungeons.json').dungeons || []), ...(readData('dungeons.json').other || [])]) add(d.n[1], d.n[0]);
+  for (const it of items.values()) add(it.n[1], it.n[0]);
+  fs.writeFileSync(path.join(ROOT, '.cache/glossary.json'), JSON.stringify(g));
+}
+console.log(`[build] wiki texts without Spanish: ${W.missed.size} (machine translations loaded: ${Object.keys(wikiEs).length})`);
 // Recipes written in the official item descriptions (English text from the API):
 //  - "Purchased from NPC in PLACE in exchange for:\n• 1 Item\n• 2 Items" → vendor exchange (vx), used by the crafting tree.
 //  - "Combine with A, B, and C in the Mystic Forge to create X." → Mystic Forge recipe of X when we have none for it.
@@ -361,6 +378,13 @@ for (const [k, c] of Object.entries(gw2t.containers || {})) {
   const cur = (c.c || []).filter(([id]) => curName.has(id)).map(([id, min, max]) => [id, min === max ? min : `${min}–${max}`, ...curName.get(id)]);
   containers[k] = { i: c.i, c: cur.length || !containers[k] ? cur : containers[k].c };
 }
+// Currency id -> the item with the same English name (the item version of a wallet currency).
+const currencyItem = new Map();
+{
+  const byEn = new Map();
+  for (const it of items.values()) if (it.n[1] && !byEn.has(it.n[1]) && /Consumable|Trophy|CraftingMaterial/.test(it.t)) byEn.set(it.n[1], it);
+  for (const c of names.currencies) { const it = byEn.get(c.en); if (it) currencyItem.set(c.id, it); }
+}
 for (const [k, c] of Object.entries(containers)) {
   const box = items.get(Number(k));
   if (!box) continue;
@@ -369,6 +393,11 @@ for (const [k, c] of Object.entries(containers)) {
   for (const [id, qty, kind] of box.ct) {
     const it = items.get(id);
     (it.ci ||= []).push([box.id, qty, kind]);
+  }
+  // Wallet currencies that also exist as an item (Spirit Shard, …): the containers count for that item too.
+  for (const [cid, qty] of c.c || []) {
+    const it = currencyItem.get(cid);
+    if (it && it.id !== box.id) (it.ci ||= []).push([box.id, Number(String(qty).split(/[–-]/)[0]) || 1, 'Guaranteed']);
   }
 }
 for (const it of items.values()) if (it.ci) it.ci = it.ci.slice(0, 40);

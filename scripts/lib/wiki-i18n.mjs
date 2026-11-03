@@ -25,7 +25,10 @@ const FESTIVALS = {
 
 const COIN = { 'Gold coin': ['oro', 'gold'], 'Silver coin': ['plata', 'silver'], 'Copper coin': ['cobre', 'copper'] };
 
-export function makeTranslator({ items, currencies = [], places = new Map(), achievements = new Map() }) {
+export function makeTranslator({ items, currencies = [], places = new Map(), achievements = new Map(), phrases = new Map() }) {
+  // phrases: English wiki text -> Spanish (data/wiki-es.json, machine translation with the game's names kept).
+  // missed: English texts with no Spanish version yet (written to .cache/wiki-untranslated.json for the next run).
+  const missed = new Set();
   // English item name -> {id, es}. With duplicates (same name, several IDs) the tradable / most common one wins.
   const itemByEn = new Map();
   for (const it of items.values()) {
@@ -63,7 +66,8 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
       rest = rest.slice(0, m.index).trim();
     }
     const it = itemByEn.get(rest);
-    const es = it?.es || places.get(rest) || null;
+    const es = it?.es || places.get(rest) || phrases.get(rest) || null;
+    if (!es && rest) missed.add(rest);
     const suf = parts.map((p) => {
       const tokens = p.split(/,\s*/).map((tk) => {
         if (/^[\d\s–-]+$/.test(tk)) return [tk, tk];
@@ -147,7 +151,9 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
         if (m) { const r = fn(m); if (r) return r; }
       }
       if (/^\d+$/.test(t)) return t;
+      if (phrases.has(t)) return phrases.get(t);
       ok = false;
+      missed.add(t);
       return t;
     }).join(' ');
     return [es, s, ok];
@@ -161,5 +167,5 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
 
   const place = (en) => (en ? [places.get(en) || en, en] : ['', '']);
 
-  return { entry, cost, note, vendor, place, itemByEn };
+  return { entry, cost, note, vendor, place, itemByEn, missed };
 }

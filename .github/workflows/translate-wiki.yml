@@ -1,0 +1,37 @@
+name: Translate wiki texts
+# One-off (and after new wiki data): machine-translates the wiki texts that have no Spanish version.
+# limit > 0 is a test run that only prints samples; limit 0 translates everything and commits data/wiki-es.json.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Test run with this many texts (0 = all, and commit)'
+        default: '120'
+permissions:
+  contents: write
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm run data:fetch && npm run generate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch && pip install "transformers<5" sentencepiece sacremoses
+      - run: python scripts/translate-wiki.py
+        env:
+          LIMIT: ${{ github.event.inputs.limit }}
+      - name: Commit
+        if: github.event.inputs.limit == '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/wiki-es.json
+          git diff --cached --quiet || (git commit -m "Wiki texts: Spanish machine translation" && git pull --rebase && git push)
