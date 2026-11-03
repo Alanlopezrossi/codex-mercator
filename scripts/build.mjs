@@ -140,7 +140,16 @@ for (const [rid, reg] of Object.entries(floorEs.regions || {})) {
   }
 }
 const achievements = new Map(names.achievements.map((a) => [a.en, a.es]));
-const wikiEs = fs.existsSync(path.join(ROOT, 'data/wiki-es.json')) ? readData('wiki-es.json').t || {} : {};
+// Official Spanish GW2 terms the machine translation gets wrong (fixed here, so no new translation run is needed).
+const WIKI_ES_FIX = [
+  [/\b([Ee]l|[Ll]os) nivel (\d+) caracteres\b/g, (m, a, n) => `${a[0] === 'E' ? 'L' : 'l'}os personajes de nivel ${n}`], [/\bnivel (\d+) caracteres\b/g, 'personajes de nivel $1'], [/\bcaracteres\b/g, 'personajes'], [/\bcarácter\b/g, 'personaje'],
+  [/\bLiving World\b/g, 'Mundo Viviente'], [/\bCorazón de las Espinas\b/g, 'Heart of Thorns'], [/\bCamino del Fuego\b/g, 'Path of Fire'],
+  [/\bFin de los Dragones\b/g, 'End of Dragons'], [/\bexperiencia de dominio\b/g, 'experiencia de maestría'],
+  [/\b([Hh])uelgas?\b/g, (m, h) => (h === 'H' ? 'Ataque' : 'ataque')], [/\b[Pp]echos?\b/g, (m) => (m.endsWith('s') ? 'cofres' : 'cofre')],
+  [/\bPvP\b/g, 'JcJ'], [/\bWvW\b/g, 'McM'],
+];
+const fixEs = (t) => WIKI_ES_FIX.reduce((x, [re, rep]) => x.replace(re, rep), t);
+const wikiEs = fs.existsSync(path.join(ROOT, 'data/wiki-es.json')) ? Object.fromEntries(Object.entries(readData('wiki-es.json').t || {}).map(([k, v]) => [k, fixEs(v)])) : {};
 const W = makeTranslator({ items, currencies: names.currencies, places, achievements, phrases: new Map(Object.entries(wikiEs)) });
 // Spanish NPC names (as in the game).
 const NPC_ES = fs.existsSync(path.join(ROOT, 'data/npc-names-es.json')) ? readData('npc-names-es.json').names : {};
