@@ -24,7 +24,8 @@ function recipeOf(it, root = false) {
   // Mystic Forge: tradable materials have "promotion" recipes (e.g. dust from lower-tier dust) that are not how
   // anyone gets them, so below the root they count as base materials (buy or farm them).
   const f = it.w?.forge?.[0] || it.mf?.[0];
-  if (f && (root || !it.tp)) return { kind: 'forge', q: f.q || 1, i: f.i.filter(([id]) => id).map(([id, n]) => [id, n]) };
+  // Generic ingredients ("any charm") have no ID: they are shown as text rows.
+  if (f && (root || !it.tp)) return { kind: 'forge', q: f.q || 1, i: f.i.filter(([id]) => id).map(([id, n]) => [id, n]), g: f.i.filter(([id]) => !id).map(([, n, en, es]) => [(li === 0 && es) || en, n]) };
   // Bought from a vendor in exchange for other items (from the item description).
   if (it.vx?.i?.length) return { kind: 'vendor', q: 1, v: (li === 0 && it.vx.ve) || it.vx.v, i: it.vx.i };
   return null;
@@ -49,17 +50,19 @@ function build(id, qty, depth, path, counter) {
   const node = { id, qty, it, kids: [] };
   if (!it || depth >= MAX_DEPTH || path.has(id) || counter.n > MAX_NODES) return node;
   const r = recipeOf(it, depth === 0);
-  if (!r || !r.i.length) return node;
+  if (!r || !(r.i.length || r.g?.length)) return node;
   node.r = r;
   const runs = Math.ceil(qty / (r.q || 1));
   node.runs = runs;
   const next = new Set(path).add(id);
   for (const [cid, n] of r.i) { counter.n++; node.kids.push(build(cid, n * runs, depth + 1, next, counter)); }
+  for (const [label, n] of r.g || []) node.kids.push({ generic: label, qty: n * runs, kids: [] });
   return node;
 }
 
 function leaves(node, acc = new Map()) {
-  if (!node.kids.length) acc.set(node.id, (acc.get(node.id) || 0) + node.qty);
+  if (node.generic) acc.set(`g:${node.generic}`, (acc.get(`g:${node.generic}`) || 0) + node.qty);
+  else if (!node.kids.length) acc.set(node.id, (acc.get(node.id) || 0) + node.qty);
   else for (const k of node.kids) leaves(k, acc);
   return acc;
 }
@@ -98,6 +101,7 @@ const nameOf = (it, id) => (it ? it.n[li] || it.n[1 - li] : `#${id}`);
 const icon = (it) => (it?.ic ? `<img src="${esc(iconUrl(it.ic))}" alt="" width="28" height="28" loading="lazy" class="ic r-${esc(it.r)}">` : '<span class="ic ic-ph" aria-hidden="true"></span>');
 
 function nodeHtml(node, depth = 0) {
+  if (node.generic) return `<li class="tr-leaf"><span class="tr-row"><span class="ic ic-ph" aria-hidden="true"></span><span class="tr-qty">${num(node.qty, lang)}×</span><span>${esc(node.generic)}</span></span></li>`;
   const it = node.it;
   const label = `${icon(it)}<span class="tr-qty">${num(node.qty, lang)}×</span><a class="r-txt-${esc(it?.r || 'Basic')}" href="${itemPath(lang, node.id, nameOf(it, node.id))}">${esc(nameOf(it, node.id))}</a>`;
   if (!node.kids.length) return `<li class="tr-leaf"><span class="tr-row">${label}${infoBtn(node.id)}<span class="tr-price" data-tp="${node.id}" data-n="${node.qty}"></span></span></li>`;
@@ -124,14 +128,14 @@ export async function renderTree(box, id) {
   const deep = root.kids.some((k) => k.kids.length);
   const base = leaves(root);
   const rows = [...base.entries()].sort((a, b) => b[1] - a[1]);
-  const items = await Promise.all(rows.map(([lid]) => load(lid)));
+  const items = await Promise.all(rows.map(([lid]) => (typeof lid === 'string' ? null : load(lid))));
   rows.forEach(([lid], i) => { if (!cache.has(lid)) cache.set(lid, items[i]); });
   const es = lang === 'es';
   box.innerHTML = `<h2 id="tree-h">${es ? 'Árbol de fabricación' : 'Crafting tree'}</h2>
     <p class="small muted">${es ? 'Todo lo que hay que fabricar, paso a paso, hasta los materiales básicos. Tocá un ítem para ver su ficha.' : 'Everything to craft, step by step, down to the base materials. Tap an item to open it.'}${counter.n > MAX_NODES ? ` ${es ? '(Árbol recortado: es muy grande.)' : '(Tree trimmed: it is very large.)'}` : ''}</p>
     ${deep ? `<ul class="tree">${nodeHtml(root)}</ul>` : ''}
     <h3 class="h-sub">${es ? 'Materiales básicos en total' : 'Total base materials'} <span class="count">${rows.length}</span></h3>
-    <ul class="tr-total">${rows.map(([lid, n], i) => `<li><span class="tr-row">${icon(items[i])}<span class="tr-qty">${num(n, lang)}×</span><a class="r-txt-${esc(items[i]?.r || 'Basic')}" href="${itemPath(lang, lid, nameOf(items[i], lid))}">${esc(nameOf(items[i], lid))}</a>${infoBtn(lid)}<span class="tr-price" data-tp="${lid}" data-n="${n}"></span></span></li>`).join('')}</ul>
+    <ul class="tr-total">${rows.map(([lid, n], i) => typeof lid === 'string' ? `<li><span class="tr-row"><span class="ic ic-ph" aria-hidden="true"></span><span class="tr-qty">${num(n, lang)}×</span><span>${esc(lid.slice(2))}</span></span></li>` : `<li><span class="tr-row">${icon(items[i])}<span class="tr-qty">${num(n, lang)}×</span><a class="r-txt-${esc(items[i]?.r || 'Basic')}" href="${itemPath(lang, lid, nameOf(items[i], lid))}">${esc(nameOf(items[i], lid))}</a>${infoBtn(lid)}<span class="tr-price" data-tp="${lid}" data-n="${n}"></span></span></li>`).join('')}</ul>
     <p class="small" id="treeCost"></p>`;
   box.hidden = false;
   box.addEventListener('click', (e) => {

@@ -186,14 +186,51 @@ let wikiOk = 0;
 const tally = (ok) => { wikiTotal++; if (ok) wikiOk++; return ok; };
 // The extraction sometimes glued several areas together ("Grand PiazzaFort Marriner..."): we drop those.
 const glued = (x) => /[a-z'][A-Z]/.test(x || '');
-for (const [k, w] of Object.entries(wiki.items)) {
+// Wiki pages matched to the wrong item by the extraction: the page title must be the item's name (plurals and
+// shorter names such as "Dark Matter" for "Glob of Dark Matter" are fine; generic "(ingredient)" pages are not).
+const wikiKey = (n) => String(n || '').toLowerCase().replace(/[’'`´]/g, '').replace(/\bthe\b/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const sameItemPage = (title, name) => {
+  if (!title || !name) return true;
+  if (/\((ingredient|any)\)$/i.test(title)) return false;
+  const a = wikiKey(title).replace(/s\b/g, '');
+  const b = wikiKey(name).replace(/s\b/g, '');
+  return a === b || b.includes(a) || a.includes(b);
+};
+// Recipe ingredients that are a kind of item, not one item ("any charm", "any ascended scepter"): shown as text.
+const GENERIC_ES = { Charm: 'Amuleto (cualquiera)', 'Ascended scepter': 'Cetro ascendido (cualquiera)', 'Ascended mace': 'Maza ascendida (cualquiera)', Relic: 'Reliquia (cualquiera)', 'Valkyrie Bearkin War Helm (heavy)': 'Yelmo de guerra de osuno de valquiria (pesado)' };
+const DISCIPLINE = /^(Chef|Crafting|Artificer|Armorsmith|Huntsman|Jeweler|Leatherworker|Scribe|Tailor|Weaponsmith)$/;
+// Fixes checked by hand against the wiki (the extraction got these pages wrong).
+const FORGE_FIX = { 89103: [{ q: 1, i: [[0, 3, 'Charm (any)', 'Amuleto (cualquiera)'], [20796, 1, "Philosopher's Stone"]] }] };
+function cleanForge(list) {
+  const out = [];
+  for (const f of list) {
+    if (f.i.some(([, , title]) => DISCIPLINE.test(title || ''))) continue; // a crafting requirement, not a forge recipe
+    const merged = new Map();
+    for (const [id0, n, title] of f.i) {
+      const generic = /\(ingredient\)$/i.test(title || '');
+      const base = generic ? String(title).replace(/\s*\(ingredient\)$/i, '') : title;
+      const id = generic ? 0 : id0 || W.itemByEn.get(title)?.id || 0;
+      const key = id || `t:${base}`;
+      const prev = merged.get(key);
+      if (prev) prev[1] += n;
+      else merged.set(key, id ? [id, n, title] : [0, n, generic ? `${base} (any)` : base, GENERIC_ES[base] || '']);
+    }
+    out.push({ ...f, i: [...merged.values()].map((g) => (g[3] ? g : g.slice(0, 3))) });
+  }
+  return out;
+}
+let wikiRejected = 0;
+for (let [k, w0] of Object.entries(wiki.items)) {
   const it = items.get(Number(k));
   if (!it) continue;
+  if (!sameItemPage(w0.title, it.n[1])) { wikiRejected++; if (!FORGE_FIX[k]) continue; w0 = { title: it.n[1] }; }
+  const w = w0;
   const ww = { title: w.title };
-  if (w.forge) {
+  if (FORGE_FIX[k] || w.forge) {
     // Ingredients without an ID: look the item up by its English name.
-    ww.forge = w.forge.map((f) => ({ q: f.q, i: f.i.map(([id, n, title]) => [id || W.itemByEn.get(title)?.id || 0, n, title]) }));
-    for (const f of ww.forge) for (const [id] of f.i) if (id) {
+    ww.forge = FORGE_FIX[k] || cleanForge(w.forge);
+    if (!ww.forge.length) delete ww.forge;
+    for (const f of ww.forge || []) for (const [id] of f.i) if (id) {
       let st = usedIn.get(id);
       if (!st) usedIn.set(id, (st = new Set()));
       st.add(it.id);
@@ -221,6 +258,7 @@ for (const [k, w] of Object.entries(wiki.items)) {
   it.w = ww;
 }
 console.log(`[build] wiki data: ${wikiOk}/${wikiTotal} entries translated to the game's Spanish names`);
+console.log(`[build] wiki pages matched to the wrong item and skipped: ${wikiRejected}`);
 // Recipes written in the official item descriptions (English text from the API):
 //  - "Purchased from NPC in PLACE in exchange for:\n• 1 Item\n• 2 Items" → vendor exchange (vx), used by the crafting tree.
 //  - "Combine with A, B, and C in the Mystic Forge to create X." → Mystic Forge recipe of X when we have none for it.

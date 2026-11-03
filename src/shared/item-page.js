@@ -87,7 +87,7 @@ function forgeHtml(lang, it) {
   const f = fromWiki ? it.w.forge : it.mf;
   if (!f?.length) return '';
   const blocks = f.map((r) => `<div class="recipe card-inner"><p class="recipe-meta"><span class="tag tag-forge">${esc(t(lang, 'item.forge'))}</span>${r.q > 1 || r.qx ? ` · ${esc(t(lang, 'item.makes'))} ×${r.q}${r.qx ? `–${r.qx}` : ''}` : ''}</p>
-    <ul class="ref-list">${r.i.map(([id, n, title]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-kind ic-kind-forge" aria-hidden="true"></span><span class="ref-name"${lang === 'es' ? ' lang="en"' : ''}>${esc(title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
+    <ul class="ref-list">${r.i.map(([id, n, title, tes]) => `<li>${id ? refLink(lang, id, it.refs?.[id], n) : `<span class="ref"><span class="ic ic-kind ic-kind-forge" aria-hidden="true"></span><span class="ref-name"${lang === 'es' && !tes ? ' lang="en"' : ''}>${esc(lang === 'es' && tes ? tes : title)}</span><span class="ref-count">×${num(n, lang)}</span></span>`}</li>`).join('')}</ul></div>`).join('');
   return `<section class="card" aria-labelledby="forge-h"><h2 id="forge-h">${esc(t(lang, 'item.forge'))}</h2>${blocks}${fromWiki ? wikiCredit(lang, it) : ''}</section>`;
 }
 

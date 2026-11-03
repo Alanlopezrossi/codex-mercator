@@ -34,6 +34,13 @@ export function makeTranslator({ items, currencies = [], places = new Map(), ach
     const prev = itemByEn.get(en);
     if (!prev || (!prev.tp && it.tp)) itemByEn.set(en, { id: it.id, es: it.n[0] || en, tp: it.tp });
   }
+  // Loose fallback for wiki names that differ slightly from the game's ("Gift of Tenebral Ward" vs
+  // "Gift of the Tenebral Ward"): ignores "the", case, apostrophes and punctuation. Used only when it is unambiguous.
+  const loose = (n) => String(n).toLowerCase().replace(/[’'`´]/g, '').replace(/\bthe\b/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const byLoose = new Map();
+  for (const [en, v] of itemByEn) { const k = loose(en); byLoose.set(k, byLoose.has(k) && byLoose.get(k)?.id !== v.id ? null : v); }
+  const exactGet = itemByEn.get.bind(itemByEn);
+  itemByEn.get = (en) => exactGet(en) || (en ? byLoose.get(loose(en)) || undefined : undefined);
   const curByEn = new Map(currencies.map((c) => [c.en, c.es]));
 
   const nameEs = (en) => {
