@@ -409,7 +409,13 @@ for (const [k, c] of Object.entries(containers)) {
     if (it && it.id !== box.id) (it.ci ||= []).push([box.id, Number(String(qty).split(/[–-]/)[0]) || 1, 'Guaranteed']);
   }
 }
-for (const it of items.values()) if (it.ci) it.ci = it.ci.slice(0, 40);
+// Up to 40 containers per item: first the ones named after it ("Bag of Spirit Shards"), then guaranteed ones, then by chance.
+for (const it of items.values()) if (it.ci) {
+  const en = (it.n[1] || '').replace(/s$/, '').toLowerCase();
+  const rank = ([bid, , kind]) => (en && (items.get(bid)?.n[1] || '').toLowerCase().includes(en) ? 0 : 2) + (kind === 'Guaranteed' || kind === 'Choice' ? 0 : 1);
+  const seen = new Set();
+  it.ci = it.ci.filter(([bid]) => !seen.has(bid) && seen.add(bid)).sort((a, b) => rank(a) - rank(b)).slice(0, 40);
+}
 
 // Mystic Forge recipes the wiki data lacks (gw2treasures).
 for (const [k, recs] of Object.entries(gw2t.forge || {})) {
