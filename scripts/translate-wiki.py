@@ -66,6 +66,27 @@ def translate(batch):
     gen = model.generate(**enc, num_beams=3, max_new_tokens=300)
     return tok.batch_decode(gen, skip_special_tokens=True)
 
+# GW2 terms the general-purpose model gets wrong (applied after translating).
+FIX = [
+    (r"\b[Mm]isi[oó]n(es)? de huelga\b", lambda m: f"{m.group(0)[0]}isi{'ones' if m.group(1) else 'ón'} de ataque"),
+    (r"\bFragua M[ií]stica\b", "Forja Mística"),
+    (r"\b(?:Dejad[oa]s? caer|Derribad[oa]s?|Ca[ií]d[oa]s?) (?:por|de)\b", "Lo suelta"),
+    (r"^Ca[ií]das? de\b", "Lo sueltan"),
+    (r"\bOportunidad de caer de\b", "Probabilidad de que lo suelten"),
+    (r"\b[Pp]echo(s)?\b", lambda m: "cofre" + ("s" if m.group(1) else "")),
+    (r"\bart[ií]culo(s)?\b", lambda m: "objeto" + ("s" if m.group(1) else "")),
+    (r"\bmontajes?\b", "monturas"),
+    (r"\[Evento del Grupo\]", "[Evento de grupo]"),
+    (r"\bevento del grupo\b", "evento de grupo"),
+    (r"\bse reúne desde\b", "se recolecta de"),
+    (r"\bnodo de Recursos\b", "nodo de recursos"),
+    (r"\bjefe del mundo\b", "jefe de mundo"),
+]
+def fix(t):
+    for pat, rep in FIX:
+        t = re.sub(pat, rep, t)
+    return t[:1].upper() + t[1:] if t else t
+
 res, fails, t0 = {}, 0, time.time()
 prot = [protect(t) for t in todo]
 for i in range(0, len(todo), BATCH):
@@ -76,7 +97,7 @@ for i in range(0, len(todo), BATCH):
         if r is None and names:  # placeholders lost: try once without protecting the names
             r = translate([src])[0]
         if r and r.strip() and r.strip() != src:
-            res[src] = r.strip()
+            res[src] = fix(r.strip())
         else:
             fails += 1
     if (i // BATCH) % 20 == 0:
