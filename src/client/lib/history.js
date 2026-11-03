@@ -269,6 +269,10 @@ export function initHistory(box, id) {
   new ResizeObserver(() => { if (Math.abs(box.clientWidth - w) > 40) { w = box.clientWidth; draw(); } }).observe(box);
 
   // Only when the card is about to be seen (saves the download for visitors who never scroll there).
-  const io = new IntersectionObserver((en) => { if (en.some((x) => x.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '400px' });
-  io.observe(box);
+  // (Checked on scroll instead of IntersectionObserver, which some embedded browsers never fire.)
+  const near = () => box.getBoundingClientRect().top < innerHeight + 400;
+  const check = () => { if (!near()) return; removeEventListener('scroll', check); removeEventListener('resize', check); load(); };
+  addEventListener('scroll', check, { passive: true });
+  addEventListener('resize', check, { passive: true });
+  check();
 }
