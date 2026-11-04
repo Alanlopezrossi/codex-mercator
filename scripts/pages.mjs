@@ -453,7 +453,7 @@ export function renderStaticPages(meta, { popular = [], dungeons: dgData = { dun
     };
     P('events', events(lang, evCats), {
       title: '', description: t(lang, 'ev.lead'), scripts: ['events'],
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Bazaar Ledger', url: `${meta.siteUrl}/${lang}/`, inLanguage: lang, potentialAction: { '@type': 'SearchAction', target: `${meta.siteUrl}${pagePath(lang, 'items')}?q={query}`, 'query-input': 'required name=query' } },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Bazaar Ledger', alternateName: ['Bazaar Ledger GW2', 'BazaarLedger'], url: `${meta.siteUrl}/${lang}/`, inLanguage: lang, potentialAction: { '@type': 'SearchAction', target: `${meta.siteUrl}${pagePath(lang, 'items')}?q={query}`, 'query-input': 'required name=query' } },
     });
     P('items', items(lang, meta, popular), { title: t(lang, 'items.title'), description: t(lang, 'items.lead'), scripts: ['items'] });
     P('bazaar', bazaar(lang), { title: t(lang, 'bazaar.title'), description: t(lang, 'bazaar.lead'), scripts: ['bazaar'] });

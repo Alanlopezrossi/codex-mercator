@@ -28,12 +28,31 @@ export const LOGO = '<svg class="logo" viewBox="0 0 32 32" aria-hidden="true" fo
  * @param {boolean} [o.noindex]
  * @param {object} o.meta        { siteUrl, assetVersion, dataVersion, builtAt }
  */
+const SEO_TITLES = {
+  es: {
+    bazaar: 'Bazar de GW2 en vivo: precios del Trading Post', items: 'Ítems de Guild Wars 2: precios, recetas y cómo conseguirlos',
+    gear: 'Legendarios y ascendidos de GW2: costo y cómo hacerlos', vendors: 'Mercaderes de GW2: qué vende cada PNJ y dónde está',
+    dungeons: 'Mazmorras de GW2: ubicación, niveles y caminos', instances: 'Fractales diarios y misiones de ataque de GW2',
+    achievements: 'Logros de Guild Wars 2 en español', professions: 'Profesiones de GW2: especializaciones y builds',
+    map: 'Mapa interactivo de Guild Wars 2', calculator: 'Calculadora de GW2: comisiones del bazar y oro', compare: 'Comparar ítems de GW2',
+  },
+  en: {
+    bazaar: 'GW2 Trading Post live prices', items: 'Guild Wars 2 items: prices, recipes and how to get them',
+    gear: 'GW2 legendary and ascended gear: cost and how to make it', vendors: 'GW2 vendors: what each NPC sells and where',
+    dungeons: 'GW2 dungeons: locations, levels and paths', instances: 'GW2 daily fractals and strike missions',
+    achievements: 'Guild Wars 2 achievements', professions: 'GW2 professions: specializations and builds',
+    map: 'Guild Wars 2 interactive map', calculator: 'GW2 calculator: trading post fees and gold', compare: 'Compare GW2 items',
+  },
+};
+
 export function layout(o) {
   const { lang, meta } = o;
   const other = lang === 'es' ? 'en' : 'es';
   const A = `/assets/${meta.assetVersion}`;
   const canonical = meta.siteUrl + o.alternates[lang];
-  const fullTitle = o.title ? `${o.title} · ${SITE_NAME} (${t(lang, 'fansite')})` : `${SITE_NAME} · ${t(lang, 'tagline')} (${t(lang, 'fansite')})`;
+  // Search result titles: what people search for first, the site name last (the fansite notice stays on the page).
+  const seo = o.seoTitle || SEO_TITLES[lang]?.[o.page] || o.title;
+  const fullTitle = seo ? `${seo} | ${SITE_NAME}` : `${SITE_NAME}: ${t(lang, 'tagline')}`;
   const navLinks = NAV.map((k) => {
     const href = pagePath(lang, k);
     const cur = o.page === k ? ' aria-current="page"' : '';

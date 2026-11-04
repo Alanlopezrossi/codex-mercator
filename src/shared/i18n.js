@@ -50,7 +50,7 @@ export function itemPath(lang, id, name) {
 
 const STR = {
   es: {
-    tagline: 'Bazar en vivo, ítems y eventos de Guild Wars 2',
+    tagline: 'bazar de GW2 en vivo, ítems, recetas y eventos',
     fansite: 'Fansite no oficial de GW2',
     skip: 'Saltar al contenido',
     menu: 'Menú',
@@ -370,7 +370,7 @@ const STR = {
     noscript: 'Esta sección necesita JavaScript para traer los datos en vivo.',
   },
   en: {
-    tagline: 'Guild Wars 2 live trading post, items and events',
+    tagline: 'GW2 live trading post, items, recipes and events',
     fansite: 'Unofficial GW2 fansite',
     skip: 'Skip to content',
     menu: 'Menu',

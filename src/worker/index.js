@@ -93,6 +93,8 @@ async function itemPage(request, env, ctx, m) {
     meta: { ...META, siteUrl: base },
     page: 'items',
     title: name,
+    // "Glob of Ectoplasm – price and how to get it (GW2)": the words people search for.
+    seoTitle: lang === 'es' ? `${name}: ${it.tp ? 'precio y cómo conseguirlo' : 'cómo conseguirlo'} (GW2)` : `${name}: ${it.tp ? 'price and how to get it' : 'how to get it'} (GW2)`,
     description: itemDescription(lang, it, price),
     themeColor: RARITY_COLOR[it.r],
     alternates: { es: itemPath('es', id, itemTitle('es', it)), en: itemPath('en', id, itemTitle('en', it)) },
