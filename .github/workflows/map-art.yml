@@ -1,0 +1,37 @@
+name: Map art from the wiki
+# Downloads map images that ArenaNet's tile server does not have yet (e.g. new expansion maps) from the
+# Guild Wars 2 Wiki, makes them lighter and saves them under static/maps/ (shown over the official tiles).
+on:
+  workflow_dispatch:
+    inputs:
+      files:
+        description: 'Wiki image paths, comma separated (e.g. 3/36/Leyspring_Hollows_map.jpg)'
+        required: true
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and resize
+        env:
+          FILES: ${{ github.event.inputs.files }}
+        run: |
+          set -e
+          mkdir -p static/maps
+          IFS=',' read -ra L <<< "$FILES"
+          for f in "${L[@]}"; do
+            f=$(echo "$f" | xargs)
+            case "$f" in *[!A-Za-z0-9_./%\'-]*) echo "bad path $f"; exit 1;; esac
+            name=$(basename "$f" | sed 's/%27//g; s/'"'"'//g' | tr 'A-Z' 'a-z' | sed 's/_map\.jpg$/.jpg/; s/_/-/g')
+            curl -fsSL -A "BazaarLedger (+https://bazaarledger.net)" -o /tmp/in.jpg "https://wiki.guildwars2.com/images/$f"
+            convert /tmp/in.jpg -resize '2400x2400>' -strip -quality 82 -interlace JPEG "static/maps/$name"
+            identify "static/maps/$name"
+          done
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add static/maps
+          git diff --cached --quiet || (git commit -m "Map art from the wiki: ${{ github.event.inputs.files }}" && git pull --rebase && git push)
