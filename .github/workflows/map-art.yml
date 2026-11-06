@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: pip install pillow
       - name: Download and resize
         env:
           FILES: ${{ github.event.inputs.files }}
@@ -26,8 +27,7 @@ jobs:
             case "$f" in *[!A-Za-z0-9_./%\'-]*) echo "bad path $f"; exit 1;; esac
             name=$(basename "$f" | sed 's/%27//g; s/'"'"'//g' | tr 'A-Z' 'a-z' | sed 's/_map\.jpg$/.jpg/; s/_/-/g')
             curl -fsSL -A "BazaarLedger (+https://bazaarledger.net)" -o /tmp/in.jpg "https://wiki.guildwars2.com/images/$f"
-            convert /tmp/in.jpg -resize '2400x2400>' -strip -quality 82 -interlace JPEG "static/maps/$name"
-            identify "static/maps/$name"
+            python3 -c "import sys; from PIL import Image; im=Image.open('/tmp/in.jpg').convert('RGB'); im.thumbnail((2400,2400)); im.save(sys.argv[1], quality=82, optimize=True, progressive=True); print(sys.argv[1], im.size)" "static/maps/$name"
           done
       - name: Commit
         run: |
