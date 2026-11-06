@@ -52,19 +52,25 @@ async function init() {
   };
   fit();
 
-  // Maps whose art ArenaNet has not published on the official tile server yet (it shows a blurred placeholder):
-  // outlined with a note, so the empty look is not mistaken for a broken page.
-  const NO_ART = [1633]; // Leyspring Hollows (Visions of Eternity), checked 2026-11
-  for (const id of NO_ART) {
-    const m = geo.maps.find((x) => x.id === id);
+  // Maps whose art ArenaNet's tile server does not have yet (it shows a blurred placeholder): the in-game map
+  // image from the Guild Wars 2 Wiki, placed over the map's area (static/maps/, fetched by the "Map art" workflow).
+  const MAP_ART = { 1633: '/maps/leyspring-hollows.jpg' }; // Leyspring Hollows (Visions of Eternity)
+  for (const [id, src] of Object.entries(MAP_ART)) {
+    const m = geo.maps.find((x) => x.id === Number(id));
     if (!m?.rect) continue;
     const [[x0, y0], [x1, y1]] = m.rect;
-    const box = L.rectangle(L.latLngBounds(un(x0, y1), un(x1, y0)), { color: '#e0b85c', weight: 2, dashArray: '6 6', fill: true, fillColor: '#0d1117', fillOpacity: 0.35, interactive: true }).addTo(map);
-    const note = li === 0
-      ? `<strong>${esc(m.n[0])}</strong><br>ArenaNet todavía no publicó la imagen de este mapa en su servidor de mapas: por ahora se ve un fondo borroso. Los puntos de ruta y la búsqueda funcionan igual.`
-      : `<strong>${esc(m.n[1])}</strong><br>ArenaNet has not published this map's art on its map server yet, so a blurred background shows for now. Waypoints and search work as usual.`;
-    box.bindTooltip(esc(m.n[li] || m.n[1]), { permanent: true, direction: 'center', className: 'map-noart-label' });
-    box.bindPopup(note);
+    const bounds = L.latLngBounds(un(x0, y1), un(x1, y0));
+    const img = L.imageOverlay(src, bounds, { attribution: `${esc(m.n[1])}: <a href="https://wiki.guildwars2.com/wiki/${encodeURIComponent(m.n[1].replace(/ /g, '_'))}" rel="noopener">GW2 Wiki</a>` });
+    // If the image is not there yet: an outline with a note, so the blurred area is not mistaken for a broken page.
+    img.once('error', () => {
+      img.remove();
+      const box = L.rectangle(bounds, { color: '#e0b85c', weight: 2, dashArray: '6 6', fillColor: '#0d1117', fillOpacity: 0.35 }).addTo(map);
+      box.bindTooltip(esc(m.n[li] || m.n[1]), { permanent: true, direction: 'center', className: 'map-noart-label' });
+      box.bindPopup(li === 0
+        ? `<strong>${esc(m.n[0])}</strong><br>ArenaNet todavía no publicó la imagen de este mapa en su servidor de mapas: por ahora se ve un fondo borroso. Los puntos de ruta y la búsqueda funcionan igual.`
+        : `<strong>${esc(m.n[1])}</strong><br>ArenaNet has not published this map's art on its map server yet, so a blurred background shows for now. Waypoints and search work as usual.`);
+    });
+    img.addTo(map);
   }
 
   const layer = L.layerGroup();
