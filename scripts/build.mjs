@@ -491,11 +491,11 @@ for (const it of [...items.values()].sort((a, b) => a.id - b.id)) {
 }
 const searchTsv = searchLines.join('\n');
 const searchHash = crypto.createHash('sha256').update(searchTsv).digest('hex').slice(0, 12);
-const searchFile = `/data/search/${searchHash}.tsv`;
+const searchFile = `/data/search/${searchHash}.txt`;
 fs.mkdirSync(path.join(DIST, 'data/search'), { recursive: true });
 fs.writeFileSync(path.join(DIST, searchFile), searchTsv);
 const priceLines = [...priceMap.entries()].sort((a, b) => a[0] - b[0]).filter(([id]) => items.has(id)).map(([id, p]) => [id, ...p].join('\t'));
-fs.writeFileSync(path.join(DATA, 'prices.tsv'), priceLines.join('\n'));
+fs.writeFileSync(path.join(DATA, 'prices.txt'), priceLines.join('\n'));
 // Prices per item shard (buy, sell), read by the Worker for link previews (one small file per page view, no API call).
 {
   const byShard = new Map();
@@ -514,7 +514,7 @@ for (const [li, lang] of LANGS.entries()) {
     const other = it.n[1 - li] && it.n[1 - li] !== name ? it.n[1 - li] : '';
     rows.push([id, tsvSafe(name), tsvSafe(other), rarityRank[it.r] ?? 1, typeIdx[it.t] ?? -1, ...p].join('\t'));
   }
-  fs.writeFileSync(path.join(DATA, `tp-${lang}.tsv`), rows.join('\n'));
+  fs.writeFileSync(path.join(DATA, `tp-${lang}.txt`), rows.join('\n'));
 }
 
 // Legendary and ascended gear: one row per item with how to get it (bit flags) and the icon.
@@ -802,7 +802,7 @@ const instancesData = (() => {
 // Price files stay in /data/<timestamp>/. The rest moves to /data/s<content hash>/, so a rebuild with the same
 // game data keeps the same address and visitors' browsers keep their copy (vendors, item shards, header search…).
 {
-  const LIVE_FILES = ['prices.tsv', 'tp-es.tsv', 'tp-en.tsv', 'meta.json', 'build-info.json', 'p'];
+  const LIVE_FILES = ['prices.txt', 'tp-es.txt', 'tp-en.txt', 'meta.json', 'build-info.json', 'p'];
   const tmpLive = path.join(DIST, 'data', `.live-${dataVersion}`);
   fs.mkdirSync(tmpLive, { recursive: true });
   for (const f of LIVE_FILES) if (fs.existsSync(path.join(DATA, f))) fs.renameSync(path.join(DATA, f), path.join(tmpLive, f));

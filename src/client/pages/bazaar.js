@@ -141,7 +141,7 @@ form.addEventListener('reset', () => setTimeout(() => { page = 0; run(); }, 0));
 
 readParams();
 Promise.all([
-  fetch(`${dataBase}/tp-${lang}.tsv`).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); }),
+  fetch(`${dataBase}/tp-${lang}.txt`).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); }),
   fetch(`${dataBase}/meta.json`).then((r) => r.json()).catch(() => null),
 ]).then(([tsv, meta]) => {
   all = tsv.split('\n').map((line) => {
