@@ -26,7 +26,7 @@ let mockItems = null;
 function loadMock() {
   const dist = 'dist/data';
   const ver = fs.readdirSync(dist).find((d) => /^\d{8}T/.test(d));
-  mockPrices = new Map(fs.readFileSync(path.join(dist, ver, 'prices.tsv'), 'utf8').split('\n').map((l) => {
+  mockPrices = new Map(fs.readFileSync(path.join(dist, ver, 'prices.txt'), 'utf8').split('\n').map((l) => {
     const [id, buy, bq, sell, sq] = l.split('\t').map(Number);
     return [id, { id, buys: { unit_price: buy, quantity: bq }, sells: { unit_price: sell, quantity: sq } }];
   }));

@@ -8,7 +8,7 @@ import { chromium } from 'playwright';
 const ROOT = path.resolve('dist');
 const LIMIT = Number(process.env.CLS_LIMIT || 0.1);
 const PAGES = ['/es/', '/en/', '/es/bazar', '/en/trading-post', '/es/mercaderes', '/en/vendors', '/es/logros', '/es/items', '/es/legendarios', '/es/mazmorras', '/es/fractales', '/es/comparar', '/es/apoyar', '/es/calculadora'];
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.tsv': 'text/plain' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.tsv': 'text/plain', '.txt': 'text/plain' };
 
 const server = http.createServer((q, r) => {
   const p = decodeURIComponent(q.url.split('?')[0]);

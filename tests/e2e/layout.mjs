@@ -15,7 +15,7 @@ const WIDTHS = [360, 768, 1024, 1440];
 let mock = null;
 if (process.env.MOCK_API === '1') {
   const ver = fs.readdirSync('dist/data').find((d) => /^\d{8}T/.test(d));
-  const prices = new Map(fs.readFileSync(`dist/data/${ver}/prices.tsv`, 'utf8').split('\n').map((l) => { const [id, b, bq, s, sq] = l.split('\t').map(Number); return [id, { id, buys: { unit_price: b, quantity: bq }, sells: { unit_price: s, quantity: sq } }]; }));
+  const prices = new Map(fs.readFileSync(`dist/data/${ver}/prices.txt`, 'utf8').split('\n').map((l) => { const [id, b, bq, s, sq] = l.split('\t').map(Number); return [id, { id, buys: { unit_price: b, quantity: bq }, sells: { unit_price: s, quantity: sq } }]; }));
   const items = new Map();
   for (const lang of ['es', 'en']) for (const it of JSON.parse(fs.readFileSync(`.cache/raw/items-${lang}.json`, 'utf8'))) items.set(`${lang}:${it.id}`, it);
   mock = { prices, items };
