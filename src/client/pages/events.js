@@ -8,8 +8,9 @@ import { norm, terms } from '../lib/search.js';
 import { toast } from '../lib/toast.js';
 import { toggleAlarm, hasAlarm, alarmId, alarmList, removeAlarm, alarmSettings, setAlarmSettings, playChime, testAlarm, askNotifications, onAlarmsChange } from '../lib/alarms.js';
 
-// Hidden by default: day/night cycles, PvP tournaments and festivals that are not always active.
-const HIDE = ['core-dn', 'eod-dn', 'voe-dn', 'core-ateu', 'core-atna', 'festival-lc', 'festival-db'];
+// Hidden by default: day/night cycles and PvP tournaments. Festivals are not here: the build only ships the ones the
+// official wiki has switched on (finished festivals never reach this page), so an active festival shows by default.
+const HIDE = ['core-dn', 'eod-dn', 'voe-dn', 'core-ateu', 'core-atna'];
 const KEY = 'cm-events';
 const saved = store.get(KEY, {});
 const st = {

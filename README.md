@@ -12,7 +12,7 @@
 | Item page (`/es/item/19721-...`) | Live price, recipes with ingredient cost, Mystic Forge, how to get it, what it is used for, stats | Rendered by the Worker from the data; price live from the API |
 | Trading post (`/es/bazar`, `/en/trading-post`) | 28,000 prices, sortable and filterable; visible rows refresh every minute | Build snapshot + live API |
 | Achievements, Professions | By category, with rewards / specializations and traits | Official API, live from the browser |
-| Events | World bosses and metas in local time, copyable waypoint | Wiki timer (versioned in `data/`) |
+| Events | World bosses and metas in local time, copyable waypoint | Official wiki timer, downloaded on every build (finished festivals hidden as the wiki does; `data/` is the fallback) |
 | Map | Official tiles + every waypoint | API (`/v2/continents`) |
 | Calculator | Coins and trading post fees | — |
 | Favorites | Stored in the browser only | — |

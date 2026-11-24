@@ -28,7 +28,10 @@ const prices = readRaw('prices.json');
 const floorEs = readRaw('floor-es.json');
 const floorEn = readRaw('floor-en.json');
 const wiki = readData('wiki-data.json');
-const timers = readData('event-timers.json');
+// Event timer: the copy downloaded from the wiki on this build (scripts/fetch-wiki-events.mjs), or the one in data/.
+const timers = fs.existsSync(path.join(RAW, 'event-timers.json')) ? readRaw('event-timers.json') : readData('event-timers.json');
+// Events the wiki has switched off (finished festivals) are left out everywhere: timeline, lists, map, alarms and search.
+const timersOff = new Set(timers.off || []);
 const eventNames = readData('event-names.json');
 const names = fs.existsSync(path.join(RAW, 'names.json')) ? readRaw('names.json') : { currencies: [], maps: [], achievements: [] };
 
@@ -631,7 +634,7 @@ const evName = (en, dict = eventNames.names) => {
   if (!es) missingEv.add(en);
   return [es || en, d?.en || en];
 };
-const events = Object.entries(timers.events).map(([key, ev]) => ({
+const events = Object.entries(timers.events).filter(([key]) => !timersOff.has(key)).map(([key, ev]) => ({
   key,
   c: evName(ev.c, eventNames.categories),
   n: evName(ev.n),
@@ -673,7 +676,7 @@ if (fs.existsSync(path.join(ROOT, 'data/ach-guides.json'))) {
 if (fs.existsSync(path.join(ROOT, 'data/achievements-extra.json'))) {
   fs.copyFileSync(path.join(ROOT, 'data/achievements-extra.json'), path.join(DATA, 'ach-extra.json'));
 }
-fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, v: timers.v, events }));
+fs.writeFileSync(path.join(DATA, 'events.json'), JSON.stringify({ source: timers.source, at: timers.at, v: timers.v, off: [...timersOff], events }));
 
 // ---------- 8. Metadata ----------
 const counts = { items: items.size, recipes: recipes.length, tradable: priceLines.length, waypoints: geo.wps.length };
